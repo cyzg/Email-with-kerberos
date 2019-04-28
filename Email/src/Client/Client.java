@@ -162,8 +162,7 @@ public class Client {
 
 		System.out.println("---------------");
 		System.out.println(p.getHead().hashCode());
-		
-		
+		System.out.println(p.getHead().getExistLogin());
 	}
 
 }
