@@ -10,6 +10,7 @@ public class AS {
 	 * @return 返回分析完成的package
 	 */
 	public DataStruct.Package packAnalyse(String message){
+		
 		return new DataStruct.Package();
 	}
 	/**

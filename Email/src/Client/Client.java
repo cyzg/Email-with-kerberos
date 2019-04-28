@@ -3,6 +3,28 @@ package Client;
 import java.net.Socket;
 
 public class Client {
+	
+	private static int Number = 0; //包的初始编号
+	private final int MAXNUMBER = 0; //包的最大编号
+	private final static String ASID = "0001"; //包的最大编号
+	
+	/**
+	 * 把str补齐到n位，高位写0
+	 * @param n 
+	 * @param str 要补齐的字符串
+	 * @return
+	 */
+	public static String supplement(int n,String str){ 
+		if(n>str.length()) 
+		{
+		int sl=str.length();//string原长度
+		for(int i=0;i<(n-sl);i++) {
+			str="0"+str;
+		}
+		System.out.print(str);
+		}
+		return str;
+	}
 	/**
 	 * 封装发送给AS的包 
 	 * 输入要发送的信息
@@ -12,9 +34,26 @@ public class Client {
 	 * @param TS1 时间戳
 	 * @return 返回封装完成的包
 	 */
-	DataStruct.Package clientToAS(int clientID,int tgsID,String TS1){ 
+	static DataStruct.Package clientToAS(int clientID,int tgsID,String TS1){ 
+		DataStruct.Package p= new DataStruct.Package();
 		
-		return new DataStruct.Package();
+		String clientID1 = Integer.toBinaryString(clientID);
+		String tgsID1 = Integer.toBinaryString(clientID);
+		
+		p.setID(clientID1); 
+		p.setRequestID(tgsID1);
+		p.setTimeStamp(TS1);
+		
+		if(Number > 16)
+		{
+			Number = 0;
+		}
+		Number++;
+		
+		DataStruct.Head h= new DataStruct.Head(Integer.toBinaryString(Number),clientID1,ASID,"0","0","1","1","1","0","0","0");
+		p.setHead(h);
+		
+		return p;
 	}
 	
 	/**
@@ -107,8 +146,18 @@ public class Client {
 	/**
 	 * 主函数
 	 */
-	void main(){
-
+	public static void main(String[] args) {
+		DataStruct.Package p= new DataStruct.Package();
+		
+		int clientID = 4;
+		int tgsID = 3;
+		String TS1 ="123";
+		
+		p = clientToAS(clientID, tgsID , TS1);
+		System.out.println(p.getID());
+		DataStruct.Head h= p.getHead();
+		System.out.println(h);
+		System.out.println(p.getHead().getExistLogin());
 	}
 
 }
