@@ -1,6 +1,10 @@
 package DataStruct;
-
-public class Package{          //完整数据包
+/**
+ * 完整数据包
+ * @author zhuo
+ *
+ */
+public class Package{          
 	private Head head;      //头部
 	private String sessionKey;  
 	private String ID;        //发送请求的ID
@@ -25,6 +29,13 @@ public class Package{          //完整数据包
 	public Package() {
 		super();
 	}
+	
+	@Override
+	public String toString() {
+		return head.toString() + sessionKey + ID + requestID+ timeStamp +  lifeTime ;
+	}
+	
+	
 	public Head getHead() {
 		return head;
 	}
