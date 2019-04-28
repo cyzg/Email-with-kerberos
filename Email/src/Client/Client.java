@@ -4,7 +4,7 @@ import java.net.Socket;
 
 public class Client {
 	
-	private static int Number = -1; //包的初始编号
+	private static int Number = 0; //包的初始编号
 	private final int MAXNUMBER = 0; //包的最大编号
 	private final static String ASID = "0001"; //包的最大编号
 	
@@ -15,11 +15,13 @@ public class Client {
 	 * @return
 	 */
 	public static String supplement(int n,String str){ 
-		if(n>str.length()) {
-			int sl=str.length();//string原长度
-			for(int i=0;i<(n-sl);i++) {
-				str="0"+str;
-			}
+		if(n>str.length()) 
+		{
+		int sl=str.length();//string原长度
+		for(int i=0;i<(n-sl);i++) {
+			str="0"+str;
+		}
+		System.out.print(str);
 		}
 		return str;
 	}
@@ -35,8 +37,8 @@ public class Client {
 	static DataStruct.Package clientToAS(int clientID,int tgsID,String TS1){ 
 		DataStruct.Package p= new DataStruct.Package();
 		
-		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
-		String tgsID1 = supplement(4, Integer.toBinaryString(tgsID));
+		String clientID1 = Integer.toBinaryString(clientID);
+		String tgsID1 = Integer.toBinaryString(clientID);
 		
 		p.setID(clientID1); 
 		p.setRequestID(tgsID1);
@@ -44,12 +46,11 @@ public class Client {
 		
 		if(Number > 16)
 		{
-			Number = -1;
+			Number = 0;
 		}
 		Number++;
-		String number = supplement(4, Integer.toBinaryString(Number));
 		
-		DataStruct.Head h= new DataStruct.Head(number,clientID1,ASID,"0","0","1","1","1","0","0","0");
+		DataStruct.Head h= new DataStruct.Head(Integer.toBinaryString(Number),clientID1,ASID,"0","0","1","1","1","0","0","0");
 		p.setHead(h);
 		
 		return p;
@@ -76,16 +77,17 @@ public class Client {
 	DataStruct.Package clentToV(DataStruct.Ticket ticketV, DataStruct.Authenticator authV) {
 		return new DataStruct.Package();
 	}
+
+
 	/**
 	 * 将 Package 类型转化为二进制流数据
 	 * 依次判断每一属性，进行拼接
 	 * @param p 数据包
 	 * @return 二进制字符串
 	 */
-	static String packageToBiarny(DataStruct.Package p)
+	String packageToBiarny(Package p)
 	{ 
-		String send = p.toString();
-		return send;
+		return "";
 	}
 	/**
 	 * 发送消息
@@ -145,9 +147,6 @@ public class Client {
 	 * 主函数
 	 */
 	public static void main(String[] args) {
-		
-		System.out.println("--client--");
-		
 		DataStruct.Package p= new DataStruct.Package();
 		
 		int clientID = 4;
@@ -157,13 +156,8 @@ public class Client {
 		p = clientToAS(clientID, tgsID , TS1);
 		System.out.println(p.getID());
 		DataStruct.Head h= p.getHead();
-		System.out.println(p.getHead().getNumber());
-		System.out.println(packageToBiarny(p));
-
-		System.out.println("---------------");
-		System.out.println(p.getHead().hashCode());
-		
-		
+		System.out.println(h);
+		System.out.println(p.getHead().getExistLogin());
 	}
 
 }
