@@ -40,10 +40,10 @@ public class Head {   //首部协议
 
 	@Override
 	public String toString() {
-		return "Head [number=" + number + ", destID=" + destID + ", sourceID=" + sourceID + ", existLogin=" + existLogin
-				+ ", existSessionKey=" + existSessionKey + ", existID=" + existID + ", existRequstID=" + existRequstID
-				+ ", existTS=" + existTS + ", existLifeTime=" + existLifeTime + ", existTicket=" + existTicket
-				+ ", existAuthenticator=" + existAuthenticator + "]";
+		return number+ destID  + sourceID + existLogin
+			+ existSessionKey + existID +  existRequstID
+				 + existTS + existLifeTime +existTicket
+				+existAuthenticator ;
 	}
 
 

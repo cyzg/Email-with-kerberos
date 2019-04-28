@@ -10,7 +10,6 @@ public class AS {
 	 * @return 返回分析完成的package
 	 */
 	public DataStruct.Package packAnalyse(String message){
-		
 		return new DataStruct.Package();
 	}
 	/**
@@ -27,9 +26,17 @@ public class AS {
 	 * 随机生成会话密钥以字符串形式返回
 	 * @return  K(c,tgs)密钥
 	 */
-	public String generateKeyCtgs(){
-	//
-		return "";
+	public static String generateKeyCtgs(){
+		String skey = new String();
+	    for(int i= 0 ;i < 64;i++)
+	    {
+	    	int x = (int)(Math.random()*2);
+	    	if(x == 2) {
+	    		x = (int)(Math.random()*2);
+	    	}
+	    	skey = skey + Integer.toBinaryString(x);  
+	    }
+		return skey;
 	}
 	/**
 	 * 生成TicketTGS
@@ -40,6 +47,8 @@ public class AS {
 	 * @return 返回加密后的Ticket
 	 */
 	public String generateTicketTGS(DataStruct.Package p){
+		
+		
 		return "";
 	}
 	/**
@@ -93,7 +102,8 @@ public class AS {
 	/**
 	 * 主函数
 	 */
-	void main(){
-
+	public static void main(String[] args) {
+		String s = generateKeyCtgs();
+		System.out.println(s);
 	}
 }

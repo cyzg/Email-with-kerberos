@@ -22,6 +22,8 @@ public class Package{          //完整数据包
 		Ticket = ticket;
 		Auth = auth;
 	}	
+	
+	
 	public Package() {
 		super();
 	}
