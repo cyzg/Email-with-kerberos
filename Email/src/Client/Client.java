@@ -156,7 +156,6 @@ public class Client {
 		p = clientToAS(clientID, tgsID , TS1);
 		System.out.println(p.getID());
 		DataStruct.Head h= p.getHead();
-		System.out.println(h);
 		System.out.println(p.getHead().getExistLogin());
 	}
 
