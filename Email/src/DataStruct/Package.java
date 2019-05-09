@@ -1,6 +1,10 @@
 package DataStruct;
-
-public class Package{          //完整数据包
+/**
+ * 完整数据包
+ * @author zhuo
+ *
+ */
+public class Package{          
 	private Head head;      //头部
 	private String sessionKey;  
 	private String ID;        //发送请求的ID
@@ -22,11 +26,24 @@ public class Package{          //完整数据包
 		Ticket = ticket;
 		Auth = auth;
 	}	
-	
-	
 	public Package() {
-		super();
+		this.head = new Head();
+		this.sessionKey = "00000000";
+		ID = "0000";
+		this.requestID = "000";
+		this.timeStamp = "00000000000000";
+		this.lifeTime = "00000000000000";
+		Ticket = new Ticket();
+		Auth = new Authenticator();
 	}
+	
+	@Override
+	public String toString() {
+		return "Package [head=" + head + ", sessionKey=" + sessionKey + ", ID=" + ID + ", requestID=" + requestID
+				+ ", timeStamp=" + timeStamp + ", lifeTime=" + lifeTime + ", Ticket=" + Ticket + ", Auth=" + Auth + "]";
+	}
+	
+	
 	public Head getHead() {
 		return head;
 	}

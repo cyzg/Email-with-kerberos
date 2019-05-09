@@ -1,6 +1,17 @@
 package AS;
 
+import java.awt.List;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class AS {
 	/**
@@ -80,7 +91,32 @@ public class AS {
 	 * @param message 要发送的信息
 	 * @return 发送成功返回 true
 	 */
-	boolean send(Socket socket,String message){
+	static boolean send(Socket socket,String message){
+    	OutputStream os=null;
+        try {  
+              os = socket.getOutputStream();   
+            os.write(message.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            //4.关闭相应的流和Socket对象
+            if(os!=null){
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if(socket!=null){
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
 		return true;
 	}
 	/**
@@ -88,8 +124,57 @@ public class AS {
 	 * @param socket 传入对应的 socket 对象,
 	 * @return 返回接收到的消息
 	 */
-	String receive(Socket socket){
-		return "";
+	static String receive()throws IOException{
+		ServerSocket ss=null;
+        Socket s=null;
+        String ssss=null;
+      InputStream is=null; 
+      System.out.println("receive");
+        try { 
+        	ss = new ServerSocket(9090); 
+        	s = ss.accept();
+        	 System.out.println("receive");
+        	new Thread(receive()).start();
+            is = s.getInputStream();
+            //4.对获取的输入流进行的操作
+            byte [] b = new byte[20];
+            int len;
+            while((len = is.read(b))!=-1){
+                String str = new String(b,0,len);
+                ssss+=str;
+            }
+           // System.out.println(ssss);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }finally{
+            //5.关闭相应的流以及Socket,ServerSocket的对象
+            if(is!=null){
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if(s!=null){
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if(ss!=null){
+                try {
+                    ss.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+		return ssss;
 	}
 	/**
 	 * 注册
@@ -102,8 +187,18 @@ public class AS {
 	/**
 	 * 主函数
 	 */
-	public static void main(String[] args) {
-		String s = generateKeyCtgs();
-		System.out.println(s);
+	public static void main(String[] args) throws Exception {
+		//as端口9090 c端口9080
+		receive();
+		//String testip=InetAddress.getLocalHost().getHostAddress();//测试机本机IP
+	//	Socket socketasc = new Socket(testip,9080);//AS-C的socket
+	//	String message="AS发给C的测试";
+	//	send(socketasc,message);
+		System.out.println(receive());
+		
+//		String s = generateKeyCtgs();
+//		System.out.println(s);
+		
+		
 	}
 }

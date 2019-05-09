@@ -23,7 +23,7 @@ public class V {
 	 */
 	public DataStruct.Ticket AnalyseTicket(String Tickettgs){
 	
-		return new Ticket();
+		return new DataStruct.Ticket();
 	}
 	/**
 	 * 解密 Authenticator,验证票据

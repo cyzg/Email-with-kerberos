@@ -1,7 +1,6 @@
 package DataStruct;
 
 public class Head {   //首部协议
-	private String number;   //编号
 	private String destID;   //目的ID
 	private String sourceID;   //源ID
 	private String existLogin; //是否是注册（如果是注册，则seeeionkey是keyc，ID是账号，后面是密码）
@@ -13,11 +12,14 @@ public class Head {   //首部协议
 	private String existTicket;    //是否存在票据
 	private String existAuthenticator;   //是否存在认证
 	
-	public Head(String number, String destID, String sourceID, String existLogin, String existSessionKey,
-			String existID, String existRequstID, String existTS, String existLifeTime, String existTicket,
-			String existAuthenticator) {
+	private String number;   //编号
+	private String securityCode;   //验证码
+	private String expend;   //扩展位
+	
+	public Head(String destID, String sourceID, String existLogin, String existSessionKey, String existID,
+			String existRequstID, String existTS, String existLifeTime, String existTicket, String existAuthenticator,
+			String number, String securityCode, String expend) {
 		super();
-		this.number = number;
 		this.destID = destID;
 		this.sourceID = sourceID;
 		this.existLogin = existLogin;
@@ -28,44 +30,35 @@ public class Head {   //首部协议
 		this.existLifeTime = existLifeTime;
 		this.existTicket = existTicket;
 		this.existAuthenticator = existAuthenticator;
+		this.number = number;
+		this.securityCode = securityCode;
+		this.expend = expend;
 	}
-
-	
 
 	public Head() {
-		super();
+		destID = "0000";
+		sourceID = "0000";
+		existLogin = "0";
+		existSessionKey = "0";
+		existID = "0";
+		existRequstID = "0";
+		existTS = "0";
+		existLifeTime = "0";
+		existTicket = "0";
+		existAuthenticator = "0";
+		number = "0000";
+		securityCode = "0000";
+		expend = "0000";
 	}
-
-
 
 	@Override
 	public String toString() {
-		return number+ destID  + sourceID + existLogin
-			+ existSessionKey + existID +  existRequstID
-				 + existTS + existLifeTime +existTicket
-				+existAuthenticator ;
-	}
-
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((destID == null) ? 0 : destID.hashCode());
-		result = prime * result + ((existAuthenticator == null) ? 0 : existAuthenticator.hashCode());
-		result = prime * result + ((existID == null) ? 0 : existID.hashCode());
-		result = prime * result + ((existLifeTime == null) ? 0 : existLifeTime.hashCode());
-		result = prime * result + ((existLogin == null) ? 0 : existLogin.hashCode());
-		result = prime * result + ((existRequstID == null) ? 0 : existRequstID.hashCode());
-		result = prime * result + ((existSessionKey == null) ? 0 : existSessionKey.hashCode());
-		result = prime * result + ((existTS == null) ? 0 : existTS.hashCode());
-		result = prime * result + ((existTicket == null) ? 0 : existTicket.hashCode());
-		result = prime * result + ((number == null) ? 0 : number.hashCode());
-		result = prime * result + ((sourceID == null) ? 0 : sourceID.hashCode());
-		return result;
-	}
-	
+		return "Head [destID=" + destID + ", sourceID=" + sourceID + ", existLogin=" + existLogin + ", existSessionKey="
+				+ existSessionKey + ", existID=" + existID + ", existRequstID=" + existRequstID + ", existTS=" + existTS
+				+ ", existLifeTime=" + existLifeTime + ", existTicket=" + existTicket + ", existAuthenticator="
+				+ existAuthenticator + ", number=" + number + ", securityCode=" + securityCode + ", expend=" + expend
+				+ "]";
+	}	
 	
 	public String getNumber() {
 		return number;
@@ -132,6 +125,22 @@ public class Head {   //首部协议
 	}
 	public void setExistAuthenticator(String existAuthenticator) {
 		this.existAuthenticator = existAuthenticator;
+	}
+
+	public String getSecurityCode() {
+		return securityCode;
+	}
+
+	public void setSecurityCode(String securityCode) {
+		this.securityCode = securityCode;
+	}
+
+	public String getExpend() {
+		return expend;
+	}
+
+	public void setExpend(String expend) {
+		this.expend = expend;
 	}
 	
 }

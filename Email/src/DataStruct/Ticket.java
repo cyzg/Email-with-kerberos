@@ -18,14 +18,20 @@ public class Ticket{
 		this.lifeTime = lifeTime;
 	}
 	
-//	public Ticket() {
-//		this.sessionKey = sessionKey;
-//		ID = iD;
-//		IP = iP;
-//		this.requestID = requestID;
-//		this.timeStamp = timeStamp;
-////		this.lifeTime = lifeTime;
-////	}
+	public Ticket() {
+		this.sessionKey = "00000000";
+		ID = "0000";
+		IP = "0000";
+		this.requestID = "0000";
+		this.timeStamp = "00000000000000";
+		this.lifeTime = "00000000000000";
+	}
+
+	@Override
+	public String toString() {
+		return "Ticket [sessionKey=" + sessionKey + ", ID=" + ID + ", IP=" + IP + ", requestID=" + requestID
+				+ ", timeStamp=" + timeStamp + ", lifeTime=" + lifeTime + "]";
+	}
 
 	public String getSessionKey() {
 		return sessionKey;

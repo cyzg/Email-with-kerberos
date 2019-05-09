@@ -1,11 +1,17 @@
-package Client;
+  package Client;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class Client {
 	
 	private static int Number = -1; //包的初始编号
-	private final static int MAXNUMBER = 16; //包的最大编号
+	private final int MAXNUMBER = 0; //包的最大编号
 	private final static String ASID = "0001"; //包的最大编号
 	
 	/**
@@ -42,14 +48,14 @@ public class Client {
 		p.setRequestID(tgsID1);
 		p.setTimeStamp(TS1);
 		
-		if(Number > MAXNUMBER)
+		if(Number > 16)
 		{
 			Number = -1;
 		}
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
 		
-		DataStruct.Head h= new DataStruct.Head(number,clientID1,ASID,"0","0","1","1","1","0","0","0");
+		DataStruct.Head h= new DataStruct.Head(clientID1,ASID,"0","0","1","1","1","0","0","0",number,"00","0000");
 		p.setHead(h);
 		
 		return p;
@@ -94,7 +100,34 @@ public class Client {
 	 * @param message 要发送的信息
 	 * @return 发送成功返回 true
 	 */
-	boolean send(Socket socket,String message){
+	static boolean send(Socket socket,String message){
+    	OutputStream os=null;
+        try {  
+              os = socket.getOutputStream();   
+            os.write(message.getBytes());
+            System.out.println("send");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            //4.关闭相应的流和Socket对象
+            if(os!=null){
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if(socket!=null){
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+        
 		return true;
 	}
 	/**
@@ -102,8 +135,59 @@ public class Client {
 	 * @param socket 传入对应的 socket 对象,
 	 * @return 返回接收到的消息
 	 */
-	String receive(Socket socket){
-		return "";
+	static String receive()throws IOException{
+		ServerSocket ss=null;
+        Socket s=null;
+        String ssss=null;
+      InputStream is=null; 
+      ss = new ServerSocket(9080); 
+      while(true) {
+    	  s = ss.accept();
+    	  new Thread(receive()).start();
+        try {
+            
+            s = ss.accept();
+            is = s.getInputStream();
+            //4.对获取的输入流进行的操作
+            
+            byte [] b = new byte[20];
+            int len;
+            while((len = is.read(b))!=-1){
+                String str = new String(b,0,len);
+                ssss+=str;
+            }
+          // System.out.println(ssss);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }finally{
+            //5.关闭相应的流以及Socket,ServerSocket的对象
+            if(is!=null){
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if(s!=null){
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if(ss!=null){
+                try {
+                    ss.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+		return ssss;}
 	}
 	/**
 	 * 包的分析
@@ -143,8 +227,10 @@ public class Client {
 	
 	/**
 	 * 主函数
+	 * @throws IOException 
+	 * @throws UnknownHostException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
 		System.out.println("--client--");
 		
@@ -161,8 +247,15 @@ public class Client {
 		System.out.println(packageToBiarny(p));
 
 		System.out.println("---------------");
-		System.out.println(p.getHead().hashCode());
 		
+		
+		//as端口9090 C端口9080
+	//	String testip=InetAddress.getLocalHost().getHostAddress();//测试机本机IP
+	//	System.out.println(InetAddress.getLocalHost().getHostAddress());
+		Socket socketasc = new Socket("",9090);//AS-C的socket
+		String message="C发给AS的测试";
+		send(socketasc,message);
+	//	System.out.println(receive());		
 		
 	}
 
