@@ -82,15 +82,47 @@ public class Client {
 	DataStruct.Package clentToV(DataStruct.Ticket ticketV, DataStruct.Authenticator authV) {
 		return new DataStruct.Package();
 	}
+    /*
+	 * 将string字符串编程ascii码二进制编码的string字符串
+	 */
+	public static String StringToBinary(String string) 
+	{
+		int length = string.length();
+		char M[] = string.toCharArray();
+		//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+		int M1[] = new int[M.length];
+		String tmp = new String(); 
+
+		String s ="";  //进行二进制的累加
+		for(int i=0;i<M.length;i++)
+		{
+			M1[i] = M[i]-'\0'; //每一位都是int了，现在开始转换二进制
+	
+			tmp = supplement(8, Integer.toBinaryString(M1[i])); //每一位都转成了二进制
+			s = s + String.valueOf(tmp); //加入string中
+		}
+ 		return s;	
+	}
 	/**
 	 * 将 Package 类型转化为二进制流数据
 	 * 依次判断每一属性，进行拼接
 	 * @param p 数据包
 	 * @return 二进制字符串
 	 */
-	static String packageToBiarny(DataStruct.Package p)
+	static String packageToBinary(DataStruct.Package p)
 	{ 
+		String s = new String();
 		String send = p.toString();
+		if(p.getHead().getExistTS() == "1") {
+			s = StringToBinary(p.getTimeStamp());
+		}
+		String ts = p.getTimeStamp();
+		p.setTimeStamp(s);
+		send = p.packageOutput();
+		send = p.toString();
+		
+
+		p.setTimeStamp(ts);
 		return send;
 	}
 	/**
@@ -238,23 +270,28 @@ public class Client {
 		
 		int clientID = 4;
 		int tgsID = 3;
-		String TS1 ="123";
+		String TS1 = DataStruct.Package.Create_TS();
 		
 		p = clientToAS(clientID, tgsID , TS1);
 		System.out.println(p.getID());
 		DataStruct.Head h= p.getHead();
 		System.out.println(p.getHead().getNumber());
-		System.out.println(packageToBiarny(p));
 
+		System.out.println(p.toString());
 		System.out.println("---------------");
+		//System.out.println(StringToBinary("4"));
+		System.out.println(packageToBinary(p));
 		
 		
 		//as端口9090 C端口9080
 	//	String testip=InetAddress.getLocalHost().getHostAddress();//测试机本机IP
 	//	System.out.println(InetAddress.getLocalHost().getHostAddress());
-		Socket socketasc = new Socket("",9090);//AS-C的socket
-		String message="C发给AS的测试";
-		send(socketasc,message);
+		
+//		Socket socketasc = new Socket("192.168.1.104",8888);//AS-C的socket
+//		String message="C发给AS的测试，";
+//		send(socketasc,message);
+//		
+		
 	//	System.out.println(receive());		
 		
 	}

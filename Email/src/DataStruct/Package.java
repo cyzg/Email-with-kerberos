@@ -1,4 +1,9 @@
 package DataStruct;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * 完整数据包
  * @author zhuo
@@ -14,6 +19,16 @@ public class Package{
 	private Ticket Ticket;    //被请求方的票据
 	private Authenticator Auth; //请求方的确认信息
 	
+	
+    public static String Create_TS()
+    {
+    	SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+    	Calendar calendar = Calendar.getInstance();    
+	    calendar.setTime(new Date());   
+	   // System.out.println();
+	    return df.format(calendar.getTime());
+    }
+    
 	public Package(Head head, String sessionKey, String iD, String requestID, String timeStamp, String lifeTime,
 			DataStruct.Ticket ticket, Authenticator auth) {
 		super();
@@ -42,7 +57,9 @@ public class Package{
 		return "Package [head=" + head + ", sessionKey=" + sessionKey + ", ID=" + ID + ", requestID=" + requestID
 				+ ", timeStamp=" + timeStamp + ", lifeTime=" + lifeTime + ", Ticket=" + Ticket + ", Auth=" + Auth + "]";
 	}
-	
+	public String packageOutput() {
+		return head.headOutput() + sessionKey + ID + requestID + timeStamp + lifeTime + Ticket.ticketOutput() + Auth.AuthOutput();
+	}
 	
 	public Head getHead() {
 		return head;

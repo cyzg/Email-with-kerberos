@@ -59,7 +59,11 @@ public class Head {   //首部协议
 				+ existAuthenticator + ", number=" + number + ", securityCode=" + securityCode + ", expend=" + expend
 				+ "]";
 	}	
-	
+
+	public String headOutput() {
+		return destID + sourceID + existLogin + existSessionKey + existID + existRequstID + existTS + existLifeTime
+				+ existTicket + existAuthenticator + number + securityCode + expend;
+	}
 	public String getNumber() {
 		return number;
 	}

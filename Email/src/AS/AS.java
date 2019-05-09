@@ -21,6 +21,10 @@ public class AS {
 	 * @return 返回分析完成的package
 	 */
 	public DataStruct.Package packAnalyse(String message){
+		
+		
+		
+		
 		return new DataStruct.Package();
 	}
 	/**
@@ -130,10 +134,17 @@ public class AS {
         String ssss=null;
       InputStream is=null; 
       System.out.println("receive");
+      
         try { 
-        	ss = new ServerSocket(9090); 
-        	s = ss.accept();
-        	 System.out.println("receive");
+        	ss = new ServerSocket(8888);
+		    //while(true) {
+		    	s = ss.accept();  
+		    	//创建一个线程
+		    	HandlerThread Thread = new HandlerThread(s);
+                //启动线程
+		    	Thread.start();
+		   // } 
+        	System.out.println("receive");
         	new Thread(receive()).start();
             is = s.getInputStream();
             //4.对获取的输入流进行的操作
@@ -202,3 +213,20 @@ public class AS {
 		
 	}
 }
+
+	class HandlerThread implements Runnable {    
+        private Socket socket;    
+        public HandlerThread(Socket client) {    
+            socket = client;    
+            new Thread(this).start();    
+        }
+		public void start() {
+			// TODO Auto-generated method stub
+			
+		}
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			
+		}
+		}   

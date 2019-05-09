@@ -32,7 +32,9 @@ public class Ticket{
 		return "Ticket [sessionKey=" + sessionKey + ", ID=" + ID + ", IP=" + IP + ", requestID=" + requestID
 				+ ", timeStamp=" + timeStamp + ", lifeTime=" + lifeTime + "]";
 	}
-
+	public String ticketOutput() {
+		return  sessionKey + ID + IP + requestID + timeStamp + lifeTime;
+	}
 	public String getSessionKey() {
 		return sessionKey;
 	}

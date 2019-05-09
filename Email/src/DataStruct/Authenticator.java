@@ -19,6 +19,9 @@ public class Authenticator {
 	public String toString() {
 		return "Authenticator [clientID=" + clientID + ", clientIP=" + clientIP + ", timeStamp=" + timeStamp + "]";
 	}
+	public String AuthOutput() {
+		return clientID + clientIP + timeStamp;
+	}
 	public String getClientID() {
 		return clientID;
 	}
