@@ -19,12 +19,12 @@ public class Ticket{
 	}
 	
 	public Ticket() {
-		this.sessionKey = "00000000";
-		ID = "0000";
-		IP = "0000";
-		this.requestID = "0000";
-		this.timeStamp = "00000000000000";
-		this.lifeTime = "00000000000000";
+		this.sessionKey = "";
+		ID = "";
+		IP = "";
+		this.requestID = "";
+		this.timeStamp = "";
+		this.lifeTime = "";
 	}
 
 	@Override

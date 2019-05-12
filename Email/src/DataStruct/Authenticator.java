@@ -11,9 +11,9 @@ public class Authenticator {
 		this.timeStamp = timeStamp;
 	}
 	public Authenticator() {
-		this.clientID = "0000";
-		this.clientIP = "0000";
-		this.timeStamp = "00000000000000";
+		this.clientID = "";
+		this.clientIP = "";
+		this.timeStamp = "";
 	}
 	@Override
 	public String toString() {

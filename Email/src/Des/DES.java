@@ -10,10 +10,12 @@ public class DES {
 	 * @param sk       64位密钥
 	 * @return           64位密文
 	 */
-	static String encrypt(String plainText, String sk) {
+	public static String encrypt(String plainText, String sk) {
 		
 
 		System.out.println("-----加密------");
+		System.out.println("明文：");
+		System.out.println(plainText);
 		long t1=System.currentTimeMillis();
 		System.out.println("密钥：");
 		byte[] sKey = sk.getBytes();
@@ -57,7 +59,7 @@ public class DES {
 		//逆初始置换IP^-1
 		ciphertext = DESUtil.rIP(ciphertext);
 
-		System.out.println("密文");
+		System.out.println("密文："+ciphertext[0]);
 		String s = DESUtil.BytetoString(ciphertext);
 		long t2=System.currentTimeMillis();
         System.out.println("加密时间："+(t2-t1)+"ms");
@@ -71,11 +73,13 @@ public class DES {
 	 * @param sKey        64位密钥
 	 * @return            64位明文
 	 */
-	static String decrypt(String cipherText, String sk) {
+	public static String decrypt(String cipherText, String sk) {
 		
 
 		System.out.println("-----解密------");
         long t3=System.currentTimeMillis();
+		System.out.println("密文：");
+		System.out.println(cipherText);
 		System.out.println("密钥：");
 		byte[] sKey = sk.getBytes();
 		for (int i = 0; i < sKey.length; i++) 

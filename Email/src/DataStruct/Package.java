@@ -43,11 +43,11 @@ public class Package{
 	}	
 	public Package() {
 		this.head = new Head();
-		this.sessionKey = "00000000";
-		ID = "0000";
-		this.requestID = "000";
-		this.timeStamp = "00000000000000";
-		this.lifeTime = "00000000000000";
+		this.sessionKey = "";
+		ID = "";
+		this.requestID = "";
+		this.timeStamp = "";
+		this.lifeTime = "";
 		Ticket = new Ticket();
 		Auth = new Authenticator();
 	}
@@ -58,7 +58,7 @@ public class Package{
 				+ ", timeStamp=" + timeStamp + ", lifeTime=" + lifeTime + ", Ticket=" + Ticket + ", Auth=" + Auth + "]";
 	}
 	public String packageOutput() {
-		return head.headOutput() + sessionKey + ID + requestID + timeStamp + lifeTime + Ticket.ticketOutput() + Auth.AuthOutput();
+		return sessionKey + ID + requestID + timeStamp + lifeTime + Ticket.ticketOutput() + Auth.AuthOutput();
 	}
 	
 	public Head getHead() {

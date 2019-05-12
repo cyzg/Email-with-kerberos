@@ -5,6 +5,11 @@ import java.net.Socket;
 import DataStruct.Ticket;
 
 public class TGS {
+	
+
+	private static int Number = -1; //包的初始编号
+	private final int MAXNUMBER = 0; //包的最大编号
+	private final static String TGSID = "0010"; 
 	/**
 	 * 分析包
 	 * 根据头部，将接受到的包拆解开，各个字段存到 Package 对象中
@@ -43,7 +48,16 @@ public class TGS {
 	 * @return 字符串形式密钥
 	 */
 	public String generateKeyCV(){
-		return "";
+		String skey = new String();
+	    for(int i= 0 ;i < 64;i++)
+	    {
+	    	int x = (int)(Math.random()*2);
+	    	if(x == 2) {
+	    		x = (int)(Math.random()*2);
+	    	}
+	    	skey = skey + Integer.toBinaryString(x);  
+	    }
+		return skey;
 	}
 	/**
 	 * 生成Ticket
@@ -53,8 +67,55 @@ public class TGS {
 	 * @param p 解析的包中的内容
 	 * @return 返回加密后的Ticket
 	 */
-	public String generateTicketV(DataStruct.Package p){
-		return "";
+	public DataStruct.Ticket generateTicketV(DataStruct.Package p){
+		String lifetime = "";
+		DataStruct.Ticket t = new Ticket(generateKeyCV(), p.getID(), p.getAuth().getClientIP(),
+				p.getRequestID(), DataStruct.Package.Create_TS(), lifetime);
+
+		//String cipher = Des.DES.encrypt(t.AuthOutput(), k);用rsa加密
+		t = new Ticket("", "", "", "", "", "");
+		
+		//char M[] = cipher.toCharArray();
+		
+//		for(int i = 0;i<cipher.length();i++)
+//		{
+//			if(i<64) {
+//				t.setSessionKey(t.getSessionKey()+M[i]);
+//			}
+//			else if(i<68) {
+//				t.setID(t.getID()+M[i]);
+//			}
+//			else if(i<78){
+//				t.setIP(t.getIP()+M[i]);
+//			}
+//			else if(i<82) {
+//				t.setRequestID(t.getRequestID()+M[i]);
+//			}
+//			else if(i<174) {
+//				t.setTimeStamp(t.getTimeStamp()+M[i]);
+//			}
+//			else {
+//				t.setLifeTime(t.getLifeTime()+M[i]);
+//			}
+//		}
+		//加密后放入t中
+		return t;
+	}
+
+	/**
+	 * 把str补齐到n位，高位写0
+	 * @param n 
+	 * @param str 要补齐的字符串
+	 * @return
+	 */
+	public static String supplement(int n,String str){ 
+		if(n>str.length()) {
+			int sl=str.length();//string原长度
+			for(int i=0;i<(n-sl);i++) {
+				str="0"+str;
+			}
+		}
+		return str;
 	}
 	/**
 	 * 打包数据
@@ -65,8 +126,80 @@ public class TGS {
 	 * @param Ticketv 加密后的v票据
 	 * @return
 	 */
-	public String packData(String IDv,String Ticketv){
-		return "";
+	public String packData(String clientID,String IDv,DataStruct.Ticket Ticketv){
+		DataStruct.Package p = new DataStruct.Package();;
+		
+		p.setSessionKey(generateKeyCV());
+		p.setRequestID(IDv);
+		p.setTimeStamp(DataStruct.Package.Create_TS());
+		p.setTicket(Ticketv);
+		
+		if(Number > 16)
+		{
+			Number = -1;
+		}
+		Number++;
+		String number = supplement(4, Integer.toBinaryString(Number));
+		
+		DataStruct.Head h= new DataStruct.Head(TGSID,clientID,"0","1","0","1","1","1","1","0",number,"00","0000");
+		p.setHead(h);
+		
+		//加密 用c的publick  从数据库调用
+		String kc = "";
+		String c = Des.DES.encrypt(p.packageOutput(), kc);
+		
+		return c;
+	}
+    /*
+	 * 将string字符串编程ascii码二进制编码的string字符串
+	 */
+	public static String StringToBinary(String string) 
+	{
+		int length = string.length();
+		char M[] = string.toCharArray();
+		//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+		int M1[] = new int[M.length];
+		String tmp = new String(); 
+
+		String s ="";  //进行二进制的累加
+		for(int i=0;i<M.length;i++)
+		{
+			M1[i] = M[i]-'\0'; //每一位都是int了，现在开始转换二进制
+	
+			tmp = supplement(8, Integer.toBinaryString(M1[i])); //每一位都转成了二进制
+			s = s + String.valueOf(tmp); //加入string中
+		}
+ 		return s;	
+	}
+	/** 
+	 * 将 Package 类型转化为二进制流数据
+	 * 依次判断每一属性，进行拼接
+	 * @param p 数据包
+	 * @return 二进制字符串
+	 */
+	String packageToBiarny(DataStruct.Package p)
+	{ 
+		String s = new String();
+		String send = p.toString();
+		String lt = p.getLifeTime();
+		String ts = p.getTimeStamp();
+		
+		
+		if(p.getHead().getExistTS() == "1") {
+			s = StringToBinary(p.getTimeStamp());
+			p.setTimeStamp(s);
+		}
+		
+		if(p.getHead().getExistLifeTime() == "1") {
+			s = StringToBinary(p.getLifeTime());
+			p.setLifeTime(s);
+		}
+		
+		send = p.packageOutput();
+	
+		p.setTimeStamp(ts);
+		p.setLifeTime(lt);
+		return send;
 	}
 	/**
 	 * 发送消息

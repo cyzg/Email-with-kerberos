@@ -8,11 +8,16 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import DataStruct.Authenticator;
+
 public class Client {
 	
 	private static int Number = -1; //包的初始编号
 	private final int MAXNUMBER = 0; //包的最大编号
-	private final static String ASID = "0001"; //包的最大编号
+	private final static String ASID = "0001"; //ASID
+	private final static String TGSID = "0010"; 
+	private final static String SERVERID = "0011"; 
+	
 	
 	/**
 	 * 把str补齐到n位，高位写0
@@ -69,8 +74,27 @@ public class Client {
 	 * @param authTGS client发送给TGS的认证
 	 * @return 返回封装完成的包
 	 */
-	DataStruct.Package clientToTGS(int serverID, DataStruct.Ticket ticketTGS, DataStruct.Authenticator authTGS){
-		return new DataStruct.Package();
+	DataStruct.Package clientToTGS(int clientID,int serverID, DataStruct.Ticket ticketTGS, DataStruct.Authenticator authTGS){
+		DataStruct.Package p= new DataStruct.Package();
+
+		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
+		String serverID1 = supplement(4, Integer.toBinaryString(serverID));
+		
+		p.setRequestID(serverID1);
+		p.setTicket(ticketTGS);
+		p.setAuth(authTGS);
+		
+		if(Number > 16)
+		{
+			Number = -1;
+		}
+		Number++;
+		String number = supplement(4, Integer.toBinaryString(Number));
+		
+		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","1","0","0","1","1",number,"00","0000");
+		p.setHead(h);
+		
+		return p;
 	}
 	/**
 	 * 封装发送给 server 的包
@@ -79,13 +103,60 @@ public class Client {
 	 * @param authV   Server认证
 	 * @return 返回包类型
 	 */
-	DataStruct.Package clentToV(DataStruct.Ticket ticketV, DataStruct.Authenticator authV) {
-		return new DataStruct.Package();
+	DataStruct.Package clentToV(int clientID,DataStruct.Ticket ticketV, DataStruct.Authenticator authV) {
+		DataStruct.Package p= new DataStruct.Package();
+
+		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
+		
+		p.setTicket(ticketV);
+		p.setAuth(authV);
+		
+		if(Number > 16)
+		{
+			Number = -1;
+		}
+		Number++;
+		String number = supplement(4, Integer.toBinaryString(Number));
+		
+		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","0","0","0","1","1",number,"00","0000");
+		p.setHead(h);
+		
+		return p;
+	}
+	/**
+	 * 生成认证
+	 * @param ID ClientID
+	 * @param AD ClientAD
+	 * @param k Client和接收方的DES密钥
+	 * @return
+	 */
+	public DataStruct.Authenticator generateAuth(String ID,String AD,String k){
+		DataStruct.Authenticator a= new Authenticator(ID,AD,DataStruct.Package.Create_TS());
+		String cipher = Des.DES.encrypt(a.AuthOutput(), k);
+		a.setClientID("");
+		a.setClientIP("");
+		a.setTimeStamp("");
+		char M[] = cipher.toCharArray();
+		
+		for(int i = 0;i<cipher.length();i++)
+		{
+			if(i<4) {
+				a.setClientID(a.getClientID()+M[i]);
+			}
+			else if(i<14) {
+				a.setClientIP(a.getClientIP()+M[i]);
+			}
+			else {
+				a.setTimeStamp(a.getTimeStamp()+M[i]);
+			}
+		}
+		//加密后放入a中
+		return a;
 	}
     /*
 	 * 将string字符串编程ascii码二进制编码的string字符串
 	 */
-	public static String StringToBinary(String string) 
+	public static String StringoBinary(String string) 
 	{
 		int length = string.length();
 		char M[] = string.toCharArray();
@@ -98,10 +169,65 @@ public class Client {
 		{
 			M1[i] = M[i]-'\0'; //每一位都是int了，现在开始转换二进制
 	
-			tmp = supplement(8, Integer.toBinaryString(M1[i])); //每一位都转成了二进制
-			s = s + String.valueOf(tmp); //加入string中
+			tmp = supplement(8, Integer.toBinaryString(M1[i]));
+			
+			
+			//每一位都转成了二进制
+			s = s + tmp; //加入string中
 		}
  		return s;	
+	}
+    /*
+	 * 将string字符串编程ascii码二进制编码的string字符串(数字转)
+	 */
+	public static String StringToBinary(String string) 
+	{
+		char M[] = string.toCharArray();
+		//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+		int M1[] = new int[M.length];
+		String tmp = new String(); 
+
+		String s ="";  //进行二进制的累加
+		for(int i=0;i<M.length;i++)
+		{
+			if (Character.isDigit(M[i])){  // 判断是否是数字
+			    M1[i] = Integer.parseInt(String.valueOf(M[i]));
+			}
+			else {
+				System.err.println("String转Binary出错，并不是数字");
+			}
+	
+			tmp = supplement(4, Integer.toBinaryString(M1[i]));
+			//每一位都转成了二进制
+			s = s + tmp; //加入string中
+		}
+ 		return s;		
+	}
+	/**
+	 * 二进制转十进制
+	 * @param string
+	 * @return
+	 */
+	public static String BinaryToString(String string) 
+	{
+		int length = string.length();
+		char C[] = string.toCharArray();
+		String M[] = new String[length/4];
+		for(int i=0;i<M.length;i++){
+			M[i] = "";
+		}
+		//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+		int M1[] = new int[length/4];
+		String s ="";  //进行二进制的累加
+		for(int i1=0;i1<length;i1++)
+		{
+			M[i1/4] = M[i1/4]+C[i1];
+			if(i1%4 == 3) {
+				M1[i1/4] = Integer.parseInt(M[i1/4],2);
+				s = s + M1[i1/4]; //加入string中
+			}
+		}
+			return s;		
 	}
 	/**
 	 * 将 Package 类型转化为二进制流数据
@@ -113,16 +239,24 @@ public class Client {
 	{ 
 		String s = new String();
 		String send = p.toString();
-		if(p.getHead().getExistTS() == "1") {
-			s = StringToBinary(p.getTimeStamp());
-		}
+		String lt = p.getLifeTime();
 		String ts = p.getTimeStamp();
-		p.setTimeStamp(s);
-		send = p.packageOutput();
-		send = p.toString();
 		
-
+		
+		if(p.getHead().getExistTS().equals("1")) {
+			s = StringToBinary(p.getTimeStamp());
+			p.setTimeStamp(s);
+		}
+		
+		if(p.getHead().getExistLifeTime().equals("1")) {
+			s = StringToBinary(p.getLifeTime());
+			p.setLifeTime(s);
+		}
+		
+		send = p.packageOutput();
+		System.out.println(p.toString());
 		p.setTimeStamp(ts);
+		p.setLifeTime(lt);
 		return send;
 	}
 	/**
@@ -132,17 +266,25 @@ public class Client {
 	 * @param message 要发送的信息
 	 * @return 发送成功返回 true
 	 */
-	static boolean send(Socket socket,String message){
+	static Runnable send() throws  IOException{
+		Socket socket = new Socket("192.168.1.152",8888);//AS-C的socket
+		String message="C发给AS的测试";
+		 System.out.println("发送成功");
     	OutputStream os=null;
         try {  
               os = socket.getOutputStream();   
             os.write(message.getBytes());
-            System.out.println("send");
+            Thread.sleep(1000000000);
+           // System.(5000);
+         //   System.out.println("send");
         } catch (IOException e) {
             e.printStackTrace();
-        } finally{
+        } catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
             //4.关闭相应的流和Socket对象
-            if(os!=null){
+         /*   if(os!=null){
                 try {
                     os.close();
                 } catch (IOException e) {
@@ -157,11 +299,12 @@ public class Client {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-            }
+            }*/
         }
-        
-		return true;
+        return null;
+		//return true;
 	}
+
 	/**
 	 * 接收消息
 	 * @param socket 传入对应的 socket 对象,
@@ -273,26 +416,18 @@ public class Client {
 		String TS1 = DataStruct.Package.Create_TS();
 		
 		p = clientToAS(clientID, tgsID , TS1);
-		System.out.println(p.getID());
-		DataStruct.Head h= p.getHead();
-		System.out.println(p.getHead().getNumber());
 
 		System.out.println(p.toString());
-		System.out.println("---------------");
 		//System.out.println(StringToBinary("4"));
-		System.out.println(packageToBinary(p));
+		System.out.println(p.getHead().headOutput()+packageToBinary(p));
 		
+		System.out.println("---------------");
 		
-		//as端口9090 C端口9080
-	//	String testip=InetAddress.getLocalHost().getHostAddress();//测试机本机IP
-	//	System.out.println(InetAddress.getLocalHost().getHostAddress());
+		Socket socketasc = new Socket("192.168.1.137",1012);//AS-C的socket
+		String message="C发给AS的测试";
+		 new Thread(send()).start();
 		
-//		Socket socketasc = new Socket("192.168.1.104",8888);//AS-C的socket
-//		String message="C发给AS的测试，";
-//		send(socketasc,message);
-//		
-		
-	//	System.out.println(receive());		
+
 		
 	}
 
