@@ -14,11 +14,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import org.w3c.dom.Node;
 
-import Circularlinked.Circularlinkedlist.CircularLinkedList;
-import Circularlinked.Concurrentcircularlinkedlist;
-import Circularlinked.Circularlinkedlisttest;
+import Client.Client;
 
 import DataStruct.Head;
+import DataStruct.Package;
 import DataStruct.Ticket;
 
 public class AS {
@@ -273,51 +272,34 @@ public class AS {
 	 * @param socket 套接字，对应的 socket 对象
 	 * @param message 要发送的信息
 	 * @return 发送成功返回 true
+	 * @throws IOException 
 	 */
-	static boolean send(Socket socket,String message){
-    	OutputStream os=null;
+	public static boolean send(Socket socket,String message) throws IOException{
+		OutputStream os=null; 	
         try {  
-              os = socket.getOutputStream();   
-            os.write(message.getBytes());
+        	System.out.println("send");
+        	 os = socket.getOutputStream();   
+	            os.write(message.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         } finally{
-            //4.关闭相应的流和Socket对象
-            if(os!=null){
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+            os.flush();
             }
-            if(socket!=null){
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
+
+       
 		return true;
 	}
 	/**
 	 * 接收消息
 	 * @param socket 传入对应的 socket 对象,
-	 * @return 返回接收到的消息
+	 * @throws IOException 
 	 */
-	 private   CircularLinkedList<Socket> waitQueue = new Concurrentcircularlinkedlist<Socket>();
-		
-		public static void receive(Socket asocket)throws IOException{
-	        Socket s=null;
-	        String ssss=null;
-	      InputStream is=null; 
-	      System.out.println("receive");
-	        try { 
-	        								 //ss是当前处理 的socket 		
-	        	s = asocket;
-	        	 System.out.println("receive");
+ 
+	public static String receive(Socket s) throws IOException{
+		String ssss="";
+		 InputStream is=null; 
+		  try { 
+	       	     System.out.println("receive2");
 	            is = s.getInputStream();
 	            //4.对获取的输入流进行的操作
 	            byte [] b = new byte[20];
@@ -326,37 +308,16 @@ public class AS {
 	                String str = new String(b,0,len);
 	                ssss+=str;
 	            }
-	            
-	            //*********************************
-	            //调用拆包函数，对string ssss 进行处理
-	            //拆包（ssss）； 
-	            System.out.println(ssss);
-	            //*********************************
 	           
 	        } catch (IOException e) {
 	            // TODO Auto-generated catch block
 	            e.printStackTrace();
 	        }finally{
-	            //5.关闭相应的流以及Socket,ServerSocket的对象
-	            if(is!=null){
-	                try {
-	                    is.close();
-	                } catch (IOException e) {
-	                    // TODO Auto-generated catch block
-	                    e.printStackTrace();
-	                }
-	            }
-	            if(s!=null){
-	                try {
-	                    s.close();
-	                } catch (IOException e) {
-	                    // TODO Auto-generated catch block
-	                    e.printStackTrace();
-	                }
-	            }
-	            
-	            }
-	 }	
+	        	s.shutdownInput();
+	            }		
+		  	System.out.println(ssss);
+	            return ssss;
+	} 
 	     
 	/**
 	 * 注册
@@ -372,9 +333,21 @@ public class AS {
 	public static void main(String[] args) throws Exception {
 
 		System.out.println("---------AS打开---------");
-		int port=8888;//as端口9090 c端口9080
-		Circularlinkedlisttest.receiver(port);
-	
+		int port=5555;
+		new Thread(Receiver.listener(port)).start();
+		
+		
+		DataStruct.Package p = new Package();
+
+//		int clientID = 4;
+//		int tgsID = 3;
+//		String TS1 = DataStruct.Package.Create_TS();
+//		p = Client.clientToAS(clientID, tgsID , TS1);
+//		DataStruct.Ticket TicketTgs = generateTicketTGS(p,generateKeyCtgs());
+//				
+//		String s = packData(p.getID(),p.getRequestID(),DataStruct.Ticket TicketTgs)
+//		System.out.println(p.toString());
+//	
 	}
 }
 

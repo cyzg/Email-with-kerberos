@@ -43,7 +43,7 @@ public class Client {
 	 * @param TS1 时间戳
 	 * @return 返回封装完成的包
 	 */
-	static DataStruct.Package clientToAS(int clientID,int tgsID,String TS1){ 
+	public static DataStruct.Package clientToAS(int clientID,int tgsID,String TS1){ 
 		DataStruct.Package p= new DataStruct.Package();
 		
 		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
@@ -265,104 +265,67 @@ public class Client {
 	 * @param socket 套接字，对应的 socket 对象
 	 * @param message 要发送的信息
 	 * @return 发送成功返回 true
+	 * @throws IOException 
+	 * @throws UnknownHostException 
 	 */
-	static Runnable send() throws  IOException{
-		Socket socket = new Socket("192.168.1.152",8888);//AS-C的socket
-		String message="C发给AS的测试";
-		 System.out.println("发送成功");
-    	OutputStream os=null;
+	static boolean send(Socket socket,String message) throws IOException{
+		OutputStream os=null; 		
         try {  
-              os = socket.getOutputStream();   
-            os.write(message.getBytes());
-            Thread.sleep(1000000000);
-           // System.(5000);
-         //   System.out.println("send");
+        	 os = socket.getOutputStream();   
+	            os.write(message.getBytes());   
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally{
-            //4.关闭相应的流和Socket对象
-         /*   if(os!=null){
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            if(socket!=null){
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }*/
-        }
-        return null;
-		//return true;
+        } finally{
+        	os.flush();
+           socket.shutdownOutput();
+         }
+       
+		return true;
 	}
-
 	/**
 	 * 接收消息
 	 * @param socket 传入对应的 socket 对象,
 	 * @return 返回接收到的消息
 	 */
-	static String receive()throws IOException{
-		ServerSocket ss=null;
-        Socket s=null;
-        String ssss=null;
-      InputStream is=null; 
-      ss = new ServerSocket(9080); 
-      while(true) {
-    	  s = ss.accept();
-    	  new Thread(receive()).start();
-        try {
-            
-            s = ss.accept();
-            is = s.getInputStream();
-            //4.对获取的输入流进行的操作
-            
-            byte [] b = new byte[20];
-            int len;
-            while((len = is.read(b))!=-1){
-                String str = new String(b,0,len);
-                ssss+=str;
-            }
-          // System.out.println(ssss);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }finally{
-            //5.关闭相应的流以及Socket,ServerSocket的对象
-            if(is!=null){
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            if(s!=null){
-                try {
-                    s.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            if(ss!=null){
-                try {
-                    ss.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
-		return ssss;}
+	static String receive(Socket socket){
+	      InputStream is=null;
+	      String ssss = null;
+	        try {
+	            is = socket.getInputStream();
+	            //4.对获取的输入流进行的操作
+	            
+	            byte [] b = new byte[20];
+	            int len;
+	            while((len = is.read(b))!=-1){
+	                String str = new String(b,0,len);
+	                ssss+=str;
+	                System.out.println(str);
+	            }
+	            System.out.println(ssss);
+	        } catch (IOException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        }finally{
+	            //5.关闭相应的流以及Socket,ServerSocket的对象
+	            if(is!=null){
+	                try {
+	                    is.close();
+	                } catch (IOException e) {
+	                    // TODO Auto-generated catch block
+	                    e.printStackTrace();
+	                }
+	            }
+	            if(socket!=null){
+	                try {
+	                    socket.close();
+	                } catch (IOException e) {
+	                    // TODO Auto-generated catch block
+	                    e.printStackTrace();
+	                }
+	            } 
+	        }
+	        
+		return ssss;
 	}
 	/**
 	 * 包的分析
@@ -419,16 +382,20 @@ public class Client {
 
 		System.out.println(p.toString());
 		//System.out.println(StringToBinary("4"));
-		System.out.println(p.getHead().headOutput()+packageToBinary(p));
 		
 		System.out.println("---------------");
 		
-		Socket socketasc = new Socket("192.168.1.137",1012);//AS-C的socket
-		String message="C发给AS的测试";
-		 new Thread(send()).start();
-		
 
-		
+        	System.out.println("client on");
+
+    		Socket socket = new Socket("192.168.1.111",5555);
+		System.out.println("发送："+p.getHead().headOutput()+packageToBinary(p));
+        	String message =p.getHead().headOutput()+packageToBinary(p);
+        	String s = "";
+        	if(send(socket,message)) {
+        		s = receive(socket);
+        		System.out.println("收到"+s);
+        	}
 	}
 
 }
