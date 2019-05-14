@@ -1,7 +1,11 @@
 package TGS;
 
+import java.io.IOException;
 import java.net.Socket;
-
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import DataStruct.Package;
 import DataStruct.Ticket;
 
 public class TGS {
@@ -207,16 +211,53 @@ public class TGS {
 	 * @param socket 套接字，对应的 socket 对象
 	 * @param message 要发送的信息
 	 * @return 发送成功返回 true
+	 * @throws IOException 
 	 */
-	boolean send(Socket socket,String message){
+	public static boolean send(Socket socket,String message) throws IOException{
+		OutputStream os=null; 	
+        try {  
+        	
+        	 os = socket.getOutputStream();   
+	            os.write(message.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            os.flush();
+            socket.shutdownOutput();  
+            }
+
 		return true;
 	}
 	/**
 	 * 接收消息
 	 * @param socket 传入对应的 socket 对象,
-	 * @return 返回接收到的消息
+	 * @throws IOException 
 	 */
-	String receive(Socket socket){
-		return "";
+ 
+	public static String receive(Socket s) throws IOException{
+		String ssss="";
+		 InputStream is=null; 
+		  try { 
+	       	    
+	            is = s.getInputStream();
+	            //4.对获取的输入流进行的操作
+	            byte [] b = new byte[20];
+	            int len;
+	            while((len = is.read(b))!=-1){
+	                String str = new String(b,0,len);
+	                ssss+=str;
+	            }
+	           
+	        } catch (IOException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        }finally{
+	        	s.shutdownInput();
+	            }		
+		  	System.out.println("收到的包："+ssss);
+	            return ssss;
+	} 
+	public static void main(String[] args) {
+		
 	}
 }

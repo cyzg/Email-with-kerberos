@@ -1,4 +1,4 @@
-package AS;
+package TGS;
 
 
 	import java.io.IOException;
@@ -19,18 +19,19 @@ public class Receiver extends Thread{
 			  Socket s=null;       
 		        	s=socket;
 		        	try {
-						rmessage=AS.receive(s);
+						rmessage=TGS.receive(s);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 		        	//拆包调用
-
+		        	TGS tgs = new TGS();
 		        	System.out.println("-------开始处理包-------");
-		        	DataStruct.Package p = AS.packAnalyse(rmessage);
-		        	if(AS.verifyPackage(p)) {
-		        		DataStruct.Ticket TicketTgs = AS.generateTicketTGS(p,s.getInetAddress());
-		        		smessage = AS.packageToBinary(AS.packData(p.getID(),p.getRequestID(),TicketTgs));//打包并发送
+		        	DataStruct.Package p = tgs.packAnalyse(rmessage);
+		        	if(tgs.checkIdentity(p.getAuth(), p.getTicket())) {
+//		        		DataStruct.Ticket TicketTgs = TGS.generateTicketTGS(p,s.getInetAddress());
+//		        		smessage = AS.packageToBinary(AS.packData(p.getID(),p.getRequestID(),TicketTgs));//打包并发送
+		        		smessage = "已收到";
 		        	}
 		        	else {
 		        		System.err.println("client发送的包有误，请查看！！");
@@ -41,7 +42,7 @@ public class Receiver extends Thread{
 		        		System.out.println("------开始发送--------");
 		        	System.out.println("发送给Client的包："+smessage);
 		        	try {
-						AS.send(s,smessage);
+						TGS.send(s,smessage);
 		      
 		        	System.out.println("-------发送完成-------");
 					} catch (IOException e) {

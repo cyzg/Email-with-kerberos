@@ -47,7 +47,7 @@ public class Head {   //首部协议
 		existTicket = "0";
 		existAuthenticator = "0";
 		number = "0000";
-		securityCode = "0000";
+		securityCode = "00";
 		expend = "0000";
 	}
 
