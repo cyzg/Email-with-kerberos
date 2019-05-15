@@ -30,7 +30,8 @@ public class Receiver extends Thread{
 		        	DataStruct.Package p = AS.packAnalyse(rmessage);
 		        	if(AS.verifyPackage(p)) {
 		        		DataStruct.Ticket TicketTgs = AS.generateTicketTGS(p,s.getInetAddress());
-		        		smessage = AS.packageToBinary(AS.packData(p.getID(),p.getRequestID(),TicketTgs));//打包并发送
+		        		p = AS.packData(p.getHead().getSourceID(),p.getRequestID(),TicketTgs);
+		        		smessage = AS.packageToBinary(p);//打包并发送
 		        	}
 		        	else {
 		        		System.err.println("client发送的包有误，请查看！！");
@@ -40,6 +41,7 @@ public class Receiver extends Thread{
 		        	System.out.println("对应得socket"+s);
 		        		System.out.println("------开始发送--------");
 		        	System.out.println("发送给Client的包："+smessage);
+		        	
 		        	try {
 						AS.send(s,smessage);
 		      

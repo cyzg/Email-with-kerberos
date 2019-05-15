@@ -3,10 +3,12 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.ServerSocket;
+import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
@@ -18,8 +20,8 @@ public class Client {
 	private final static String ASID = "0001"; //ASID
 	private final static String TGSID = "0010"; 
 	private final static String SERVERID = "0011"; 
-	
-	
+	private final static String[] selfK ={"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977" , "1152163794881094595676879571359995304125912323044089952277703799112846640042039256420690483427161040887459792478554485040196767218736825329254102072887596847184101841933983341452289"}; //client私钥
+	 
 	/**
 	 * 把str补齐到n位，高位写0
 	 * @param n 
@@ -61,7 +63,7 @@ public class Client {
 		String number = supplement(4, Integer.toBinaryString(Number));
 		String securityCode = "00";
 		//String securityCode = StringToBinary(Integer.toBinaryString(p.hashCode()));
-		DataStruct.Head h= new DataStruct.Head(clientID1,ASID,"0","0","1","1","1","0","0","0",number,securityCode,"0000");
+		DataStruct.Head h= new DataStruct.Head(ASID,clientID1,"0","0","1","1","1","0","0","0",number,securityCode,"0000000000000000");
 		p.setHead(h);
 		
 		return p;
@@ -91,9 +93,12 @@ public class Client {
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
 		
-		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","1","0","0","1","1",number,"00","0000");
-		p.setHead(h);
+
+		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
+		tic = supplement(16, StringToBinary(tic));
 		
+		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","1","0","0","1","1",number,"00",tic);
+		p.setHead(h);
 		return p;
 	}
 	/**
@@ -118,7 +123,9 @@ public class Client {
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
 		
-		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","0","0","0","1","1",number,"00","0000");
+		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
+		tic = supplement(16, StringToBinary(tic));
+		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","0","0","0","1","1",number,"00",tic);
 		p.setHead(h);
 		
 		return p;
@@ -131,26 +138,31 @@ public class Client {
 	 * @return
 	 */
 	public DataStruct.Authenticator generateAuth(String ID,String AD,String k){
-		DataStruct.Authenticator a= new Authenticator(ID,AD,DataStruct.Package.Create_TS());
-//		String cipher = Des.DES.encrypt(a.AuthOutput(), k);
-//		a.setClientID("");
-//		a.setClientIP("");
-//		a.setTimeStamp("");
-//		char M[] = cipher.toCharArray();
-//		
-//		for(int i = 0;i<cipher.length();i++)
-//		{
-//			if(i<4) {
-//				a.setClientID(a.getClientID()+M[i]);
-//			}
-//			else if(i<14) {
-//				a.setClientIP(a.getClientIP()+M[i]);
-//			}
-//			else if(i<66){
-//				a.setTimeStamp(a.getTimeStamp()+M[i]);
-//			}
-//		}
+
+		String ts = DataStruct.Package.Create_TS();
+		DataStruct.Authenticator a= new Authenticator(ID,AD,StringToBinary(ts));
+		System.out.println(a);
+		String cipher = Des.DES.encrypt(a.AuthOutput(), k);
 		//加密后放入a中
+		a.setClientID("");
+		a.setClientIP("");
+		a.setTimeStamp("");
+		char M[] = cipher.toCharArray();
+
+		System.out.println("ci");
+		System.out.println(cipher.length());
+		for(int i = 0;i<cipher.length();i++)
+		{
+			if(i<4) {
+				a.setClientID(a.getClientID()+M[i]);
+			}
+			else if(i<40) {
+				a.setClientIP(a.getClientIP()+M[i]);
+			}
+			else {
+				a.setTimeStamp(a.getTimeStamp()+M[i]);
+			}
+		}
 		return a;
 	}
     /*
@@ -211,6 +223,9 @@ public class Client {
 	public static String BinaryToString(String string) 
 	{
 		int length = string.length();
+		if(length%4 != 0) {
+			System.err.println("Client二进制转十进制时，二进制长度有误");
+		}
 		char C[] = string.toCharArray();
 		String M[] = new String[length/4];
 		for(int i=0;i<M.length;i++){
@@ -353,7 +368,8 @@ public class Client {
 			s[i] = String.valueOf(M[i]);
 		}
 		p.setHead(new DataStruct.Head( s[0]+s[1]+s[2]+s[3] , s[4]+s[5]+s[6]+s[7] , s[8] , s[9] , s[10] , 
-						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] , s[22]+s[23]+s[24]+s[25] ));
+						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] ,
+						s[22]+s[23]+s[24]+s[25]+s[26]+s[27]+s[28]+s[29]+s[30]+s[31]+s[32]+s[33]+s[34]+s[35]+s[36]+s[37] ));
 			
 		
 		if(p.getHead().getExistSessionKey().equals("0")) {
@@ -365,29 +381,36 @@ public class Client {
 		else if(p.getHead().getExistLifeTime().equals("1")) {
 			//说明是AS发的
 			//package解密 用t1
-			String m = message;
+			String m = message.replaceFirst(p.getHead().headOutput(),"");
+			RSA.rsa rsa = new RSA.rsa();	
+			message = rsa.decrypt(m, selfK);
+
+			System.out.println("密文:"+m);
+			System.out.println("明文:"+message);
+			char C[] = message.toCharArray();
+			//解包
+			int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));
 			DataStruct.Ticket ticket = new Ticket();
-			char C[] = m.toCharArray();
-			for(int i = headLength;i<m.length();i++)
+			for(int i = 0;i<message.length();i++)
 			{	
-				if(i<headLength+64)
+				if(i<64)
 					p.setSessionKey(p.getSessionKey()+C[i]);
-				else if(i<headLength+68)
+				else if(i<68)
 					p.setRequestID(p.getRequestID()+C[i]);
-				else if(i<headLength+68+56)
+				else if(i<68+56)
 					p.setTimeStamp(p.getTimeStamp()+C[i]);
-				else if(i<headLength+68+56+56)
+				else if(i<68+56+56)
 					p.setLifeTime(p.getLifeTime()+C[i]);
-				else if(i<headLength+68+56+56+216){
-					if(i<headLength+68+56+56+64)
+				else if(i<68+56+56+tic+1){
+					if(i<68+56+56+64)
 						ticket.setSessionKey(ticket.getSessionKey()+C[i]);
-					else if(i<headLength+68+56+56+68)
+					else if(i<68+56+56+68)
 						ticket.setID(ticket.getID()+C[i]);
-					else if(i<headLength+68+56+56+99)
+					else if(i<68+56+56+100)
 						ticket.setIP(ticket.getIP()+C[i]);
-					else if(i<headLength+68+56+56+103)
+					else if(i<68+56+56+104)
 						ticket.setRequestID(ticket.getRequestID()+C[i]);
-					else if(i<headLength+68+56+56+103+56)
+					else if(i<68+56+56+104+56)
 						ticket.setTimeStamp(ticket.getTimeStamp()+C[i]);
 					else 
 						ticket.setLifeTime(ticket.getLifeTime()+C[i]);
@@ -400,7 +423,6 @@ public class Client {
 
 			String string = p.getTimeStamp();
 			p.setTimeStamp(BinaryToString(string));
-			
 			p.setLifeTime(BinaryToString(p.getLifeTime()));
 			
 //			ticket.setTimeStamp(BinaryToString(ticket.getTimeStamp()));
@@ -432,6 +454,31 @@ public class Client {
 
 		 return new DataStruct.Package();
 	}
+	
+	public static InetAddress getIpAddress() {
+	    try {
+	      Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
+	      InetAddress ip = null;
+	      while (allNetInterfaces.hasMoreElements()) {
+	        NetworkInterface netInterface = (NetworkInterface) allNetInterfaces.nextElement();
+	        if (netInterface.isLoopback() || netInterface.isVirtual() || !netInterface.isUp()) {
+	          continue;
+	        } else {
+	          Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
+	          while (addresses.hasMoreElements()) {
+	            ip = addresses.nextElement();
+	            if (ip != null && ip instanceof Inet4Address) {
+	              return ip;
+	            }
+	          }
+	        }
+	      }
+	    } catch (Exception e) {
+	    	System.err.println("IP地址获取失败" + e.toString());
+	    }
+	    return null;
+	  }
+
 	/**
 	 * 生成Kc
 	 * 用 clientID 和 client 的 pwd 的哈希值放入哈希函数中，生成 8 个字节的密钥
@@ -441,6 +488,7 @@ public class Client {
 	public String generateKeyc(DataStruct.Package p){
 		return "";
 	}
+	
 	/**
 	 * 注册
 	 * 客户在客户端设置 ID和密码
@@ -463,7 +511,7 @@ public class Client {
 	 * @throws UnknownHostException 
 	 */
 	public static void main(String[] args) throws IOException {
-		
+
 		System.out.println("--client--");
 		
 		DataStruct.Package p= new DataStruct.Package();
@@ -478,31 +526,29 @@ public class Client {
 		System.out.println("-------连接AS--------");
         System.out.println("client on");
         
-    	Socket socket = new Socket("localhost",5555);
+    	Socket socket = new Socket("192.168.1.103",5555);
     	System.out.println("发送："+packageToBinary(p));
         String message =packageToBinary(p);
         String s = "";
-//        if(send(socket,message)) {
-//        	s = receive(socket);
-//        	socket.close();
-//        }
-        s = "0001010001011110001000000010111010100100101011110011010001000111000000101111001011011111100010001000000001100100000101000101000010000000010010010000000010000000011001000001010001010000100000001000100100000010111010100100101011110011010001000111000000101111001011011111100100111111100000000000000000000000100100010000000011001000001010001010000100000000100100100000000100000000110010000010100010100001000000010001001000000";
-    	
-        
-
-		System.out.println("-------连接TGS--------");
-     //   socket = new Socket("localhost",5555);
-    	
-    	clientIP = DataStruct.Package.ipToBinary(socket.getInetAddress());
-    	
+        if(send(socket,message)) {
+        	s = receive(socket);
+        	socket.close();
+        } 
     	DataStruct.Package p2= packageAnalyse(s, null);
+		System.out.println("-------连接TGS--------");
+        
+    	clientIP = DataStruct.Package.ipToBinary(getIpAddress());
+
     	Client c = new Client();
-    	p = c.clientToTGS(clientID, c.SERVERID, p.getTicket(), c.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
-    	System.out.println(p);
-//      if(send(socket,message)) {
-//    	s = receive(socket);
-//    	socket.close();
-//    }
+    	p = c.clientToTGS(clientID, c.SERVERID, p2.getTicket(), c.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
+    	System.out.println("发给TGS的包"+p);
+        socket = new Socket("192.168.1.104",5555);
+    	
+        message =packageToBinary(p);
+    	if(send(socket,message)) {
+    	s = receive(socket);
+    	socket.close();
+    	}
 	}
 }
 

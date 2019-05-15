@@ -41,6 +41,15 @@ public class Package{
 	   // System.out.println();
 	    return df.format(calendar.getTime());
     }
+    public static boolean  isalive(String lifeTime ) {
+		String TimeNow="";
+          SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");//设置日期格式
+          TimeNow=df.format(new Date());// new Date()为获取当前系统时间
+          if(lifeTime.compareTo(TimeNow) >=0) {
+        	 return true; 
+          }
+          else {return false;}
+	}
 	/**
 	 * ip转binary
 	 * @param ip

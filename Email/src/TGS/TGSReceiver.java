@@ -5,14 +5,12 @@ package TGS;
 	import java.net.ServerSocket;
 	import java.net.Socket;
 
-import DataStruct.Package;
-
-public class Receiver extends Thread{
+public class TGSReceiver extends Thread{
 
 		private Socket socket;
 		String rmessage;
 		String smessage;
-		public Receiver(Socket server) {
+		public TGSReceiver(Socket server) {
 			this.socket=server;
 		}
 		public void run() {
@@ -28,10 +26,10 @@ public class Receiver extends Thread{
 		        	TGS tgs = new TGS();
 		        	System.out.println("-------开始处理包-------");
 		        	DataStruct.Package p = tgs.packAnalyse(rmessage);
-		        	if(tgs.checkIdentity(p.getAuth(), p.getTicket())) {
-//		        		DataStruct.Ticket TicketTgs = TGS.generateTicketTGS(p,s.getInetAddress());
-//		        		smessage = AS.packageToBinary(AS.packData(p.getID(),p.getRequestID(),TicketTgs));//打包并发送
-		        		smessage = "已收到";
+		        	if(tgs.checkIdentity(p)) {
+		        		DataStruct.Ticket TicketTgs = tgs.generateTicketV(p,s.getInetAddress());
+		        		DataStruct.Package p2 = tgs.packData(p.getHead().getSourceID(),p.getRequestID(),TicketTgs);
+		        		smessage = tgs.packageToBiarny(p2,p.getTicket().getSessionKey());//打包并发送
 		        	}
 		        	else {
 		        		System.err.println("client发送的包有误，请查看！！");
@@ -62,7 +60,7 @@ public class Receiver extends Thread{
 						sc= server.accept();
 						if(sclast!=sc) {	
 					
-							Thread thread =new Receiver(sc);
+							Thread thread =new TGSReceiver(sc);
 							thread.start();
 				        	try {
 								Thread.sleep(100);

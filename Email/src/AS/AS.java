@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+
+import DataStruct.Head;
 import DataStruct.Package;
 import DataStruct.Ticket;
 
@@ -14,7 +16,8 @@ public class AS {
 	private static int Number = -1; //包的初始编号
 	private final int MAXNUMBER = 0; //包的最大编号
 	private final static String ASID = "0001"; //ASID
-	private final static String KEYTGSAS = "0011000011110110101010001000011011100110111111101110011011001111"; //TGS与AS的密
+	private final static String[] KEYTGS = {"865703290362069039664574527025207637385565054952203601297173618790874525723","3889"}; //TGS公钥
+	private final static String[] Kc = {"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977","3889"}; //client公钥
 	/**
 	 * 分析包
 	 * 根据头部，将接受到的包拆解开，各个字段存到 Package 对象中
@@ -33,7 +36,8 @@ public class AS {
 			s[i] = String.valueOf(M[i]);
 		}
 		p.setHead(new DataStruct.Head( s[0]+s[1]+s[2]+s[3] , s[4]+s[5]+s[6]+s[7] , s[8] , s[9] , s[10] , 
-						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] , s[22]+s[23]+s[24]+s[25] ));
+						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] ,
+						s[22]+s[23]+s[24]+s[25]+s[26]+s[27]+s[28]+s[29]+s[30]+s[31]+s[32]+s[33]+s[34]+s[35]+s[36]+s[37] ));
 		
 			int count[] = {0,0,0,0,0,0,0,0};
 		for(int i = headLength;i<message.length();i++)
@@ -138,17 +142,13 @@ public class AS {
 	 * @return 返回加密后的Ticket
 	 */
 	public static DataStruct.Ticket generateTicketTGS(DataStruct.Package p,InetAddress inetAddress){
-		String lifetime = DataStruct.Package.Create_lifeTime(10);
-		String clientIP = "";
-//		char M[] = inetAddress.toString().toCharArray();
-//		
-//		for(int i = 1 ;i<M.length;i++)
-//			clientIP += M[i];
-		//System.out.println(ipToBinary(inetAddress));
-		clientIP = ipToBinary(inetAddress);
-		DataStruct.Ticket t = new Ticket(generateKeyCtgs(), p.getID(), clientIP,
+		System.out.println("-----正在生成Ticket-----");
+		String lifetime = DataStruct.Package.Create_lifeTime(2);
+		String clientIP = ipToBinary(inetAddress);
+		DataStruct.Ticket t = new Ticket(generateKeyCtgs(), p.getHead().getSourceID(), clientIP,
 				p.getRequestID(), DataStruct.Package.Create_TS(), lifetime);
-
+		System.out.println("生成的Ticket："+t);
+		
 		return t;
 	}
 	/**
@@ -190,15 +190,15 @@ public class AS {
 		}
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
+
+		DataStruct.Head h= new DataStruct.Head(clientID,ASID,"0","1","0","1","1","1","1","0",number,"00","0000000000000000");	
 		
-		DataStruct.Head h= new DataStruct.Head(ASID,clientID,"0","1","0","1","1","1","1","0",number,"00","0000");
 		p.setHead(h);
-		
 		
 		return p;
 	}
     /*
-	 * 将string字符串编程ascii码二进制编码的string字符串(数字转)
+	 * 将string字符串按位转二进制编码的string字符串(数字转)
 	 */
 	public static String StringToBinary(String string) 
 	{
@@ -260,12 +260,12 @@ public class AS {
 	 */
 	public static String packageToBinary(DataStruct.Package p)
 	{ 
+		RSA.rsa rsa = new RSA.rsa();
 		String s = new String();
 		String send = p.toString();
-		
+		DataStruct.Ticket ticket = p.getTicket();
 		String lt = p.getLifeTime();
 		String ts = p.getTimeStamp();
-		DataStruct.Ticket t = p.getTicket();
 		
 		System.out.println("打包："+p);		
 
@@ -279,55 +279,57 @@ public class AS {
 			s = StringToBinary(p.getLifeTime());
 			p.setLifeTime(s);
 		}
+		//把t转为二进制
 		if(p.getHead().getExistTicket().equals("1")) {
-			DataStruct.Ticket temp = p.getTicket();
-			s = StringToBinary(p.getTicket().getTimeStamp());
-			temp.setTimeStamp(s);
-			s = StringToBinary(p.getTicket().getLifeTime());
-			temp.setLifeTime(s);
-			p.setTicket(temp);
+			DataStruct.Ticket t = p.getTicket();
+			t.setTimeStamp(StringToBinary(p.getTicket().getTimeStamp()));
+			t.setLifeTime(StringToBinary(p.getTicket().getLifeTime()));	
+			//给Ticket加密
+			String cipher = rsa.encrypt(t.ticketOutput(), KEYTGS);
+			t = new Ticket("", "", "", "", "", "");
+			
+			char M[] = cipher.toCharArray();
+			
+			//加密后放入t中
+			for(int i = 0;i<cipher.length();i++)
+			{
+				if(i<64) {
+					t.setSessionKey(t.getSessionKey()+M[i]);
+				}
+				else if(i<68) {
+					t.setID(t.getID()+M[i]);
+				}
+				else if(i<68+32){
+					t.setIP(t.getIP()+M[i]);
+				}
+				else if(i<68+36) {
+					t.setRequestID(t.getRequestID()+M[i]);
+				}
+				else if(i<68+36+56) {
+					t.setTimeStamp(t.getTimeStamp()+M[i]);
+				}
+				else {
+					t.setLifeTime(t.getLifeTime()+M[i]);
+				}
+			}
+			p.setTicket(t);
 		}
-		send = p.getHead().headOutput()+p.packageOutput();
 
-		System.out.println("打包："+p);
-		
-		//给Ticket加密
-		String cipher = Des.DES.encrypt(t.ticketOutput(), KEYTGSAS);
-	//	System.out.println(cipher);
-	//	t = new Ticket("", "", "", "", "", "");
-		
-	//	char M[] = cipher.toCharArray();
-		
-		//加密后放入t中
-//		for(int i = 0;i<cipher.length();i++)
-//		{
-//			if(i<64) {
-//				t.setSessionKey(t.getSessionKey()+M[i]);
-//			}
-//			else if(i<68) {
-//				t.setID(t.getID()+M[i]);
-//			}
-//			else if(i<78){
-//				t.setIP(t.getIP()+M[i]);
-//			}
-//			else if(i<82) {
-//				t.setRequestID(t.getRequestID()+M[i]);
-//			}
-//			else if(i<174) {
-//				t.setTimeStamp(t.getTimeStamp()+M[i]);
-//			}
-//			else if(){
-//				t.setLifeTime(t.getLifeTime()+M[i]);
-//			}
-//		}
-		
+		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
+		tic = supplement(16, StringToBinary(tic));
+		p.getHead().setExpend(tic);
 		//加密 用c的publick  从数据库调用
-//		String kc = generateKeyCtgs();
-//		String c = Des.DES.encrypt(send, kc);
+		String c = rsa.encrypt(p.packageOutput(), Kc);//加密后的包
+
+		send = p.getHead().headOutput()+c;
+		System.out.println("明文："+p.packageOutput());
+		System.out.println("密文："+c);
 		
+		System.out.println("加密后："+p);
 		p.setTimeStamp(ts);
 		p.setLifeTime(lt);
-		p.setTicket(t);
+		p.setTicket(ticket);
+
 		return send;
 	}
 	/**

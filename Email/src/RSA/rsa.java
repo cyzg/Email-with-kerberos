@@ -1,82 +1,172 @@
 package RSA;
+import java.math.BigInteger;
 
-	import java.math.BigInteger;
-	import java.util.*;
-	/**
-	 * RSA加密、解密、测试正确性
-	 *
-	 */
-	public class rsa {
-		/**
-		 * <pre>
-		 def gen_key(p, q):
-		    n = p * q
-		    fy = (p - 1) * (q - 1)
-		    e = 3889
-		    # generate d
-		    a = e
-		    b = fy
-		    r, x, y = ext_gcd(a, b)
-		    print x
-		    d = x
-		    # 公钥    私钥
-		    return (n, e), (n, d)
-		    </pre>
-		 * @param p
-		 * @param q
-		 * @return
-		 */
-		BigInteger p = new BigInteger("106697219132480173106064317148705638676529121742557567770857687729397446898790451577487723991083173010242416863238099716044775658681981821407922722052778958942891831033512463262741053961681512908218003840408526915629689432111480588966800949428079015682624591636010678691927285321708935076221951173426894836169") ;
-		BigInteger q = new BigInteger("144819424465842307806353672547344125290716753535239658417883828941232509622838692761917211806963011168822281666033695157426515864265527046213326145174398018859056439431422867957079149967592078894410082695714160599647180947207504108618794637872261572262805565517756922288320779308895819726074229154002310375209") ;
-		   BigInteger[][] keys = genKey(p, q) ;
-		    BigInteger[] pubkey  = keys[0] ;
-		    BigInteger[] selfkey = keys[1] ;
-		
-		
-		public BigInteger[][] genKey(BigInteger p, BigInteger q){
-			BigInteger n = p.multiply(q) ;
-			BigInteger fy = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE)) ;
-			BigInteger e = new BigInteger("3889") ;
-			// generate d
-			BigInteger a = e ;
-			BigInteger b = fy ;
-			BigInteger[] rxy = new GCD().extGcd(a, b) ;
-			BigInteger r = rxy[0] ;
-			BigInteger x = rxy[1] ;
-			BigInteger y = rxy[2] ;
-			
-			BigInteger d = x ;
-			// 公钥  私钥
-			return new BigInteger[][]{{n , e}, {n , d}} ;
+public class rsa {
+
+	public static String StringToBinary(String string) 
+	{
+		char M[] = string.toCharArray();
+		//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+		int M1[] = new int[M.length];
+		String tmp = new String(); 
+
+		String s ="";  //进行二进制的累加
+		for(int i=0;i<M.length;i++)
+		{
+			if (Character.isDigit(M[i])){  // 判断是否是数字
+			    M1[i] = Integer.parseInt(String.valueOf(M[i]));
+			}
+			else {
+				System.err.println("String转Binary出错，并不是数字");
+			}
+	
+			tmp = supplement(4, Integer.toBinaryString(M1[i]));
+			//每一位都转成了二进制
+			s = s + tmp; //加入string中
 		}
-		
-		/**
-		 * 加密
-		 * @param m 被加密的信息转化成为大整数m
-		 * @param pubkey 公钥
-		 * @return
-		 */
-		public String encrypt(String plainText, BigInteger[] pubkey){
-			BigInteger n = pubkey[0] ;
-			BigInteger e = pubkey[1] ;
-			    BigInteger m = new BigInteger(plainText);
-			BigInteger c = new EXP().expMode(m, e, n) ;
-			  System.out.println("密文：" + c);
-		    return c.toString() ;
+ 		return s;		
+	}
+	
+/**
+ * 把str补齐到n位，高位写0
+ * @param n 
+ * @param str 要补齐的字符串
+ * @return
+ */
+public static String supplement(int n,String str){ 
+	if(n>str.length()) {
+		int sl=str.length();//string原长度
+		for(int i=0;i<(n-sl);i++) {
+			str="0"+str;
 		}
-		
-		/**
-		 * 解密
-		 * @param c 
-		 * @param selfkey 私钥
-		 * @return
-		 */
-		public String decrypt(String cipherText, BigInteger[] selfkey){
-			BigInteger n = selfkey[0] ;
-			BigInteger d = selfkey[1] ;
-			    BigInteger c = new BigInteger(cipherText);
-			BigInteger m = new EXP().expMode(c, d, n) ;
-			  System.out.println("被解密后信息：" + m);
-			return m.toString() ;
+	}
+	return str;
+}
+public static String StringToBinary2(String string) 
+{
+	char M[] = string.toCharArray();
+	//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+	int M1[] = new int[M.length];
+	String tmp = new String(); 
+
+	String s ="";  //进行二进制的累加
+	for(int i=0;i<M.length;i++)
+	{
+		if (Character.isDigit(M[i])){  // 判断是否是数字
+		    M1[i] = Integer.parseInt(String.valueOf(M[i]));
 		}
+		else {
+			System.err.println("String转Binary出错，并不是数字");
+		}
+
+		tmp = supplement(3, Integer.toBinaryString(M1[i]));
+		//每一位都转成了二进制
+		s = s + tmp; //加入string中
+	}
+		return s;		
+}
+public static String BinaryToString2(String string) 
+{
+	int length = string.length();
+	String str = string;
+	if(length%3 != 0) {
+		str = supplement((length+3-length%3), string);
+		length = str.length();
+	}
+	char C[] = str.toCharArray();
+	
+	String M[] = new String[length/3];
+	for(int i=0;i<M.length;i++){
+		M[i] = "";
+	}
+	//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+	int M1[] = new int[length/3];
+
+	String s ="";  //进行二进制的累加
+	for(int i1=0;i1 < length;i1++)
+	{
+		M[i1/3] = M[i1/3]+C[i1];
+		if(i1%3 == 2) {
+			M1[i1/3] = Integer.parseInt(M[i1/3],2);
+			s = s + M1[i1/3]; //加入string中
+		}
+	}
+		return s;		
+}
+public static String BinaryToString(String string) 
+{
+	int length = string.length();
+	String str = string;
+	if(length%4 != 0) {
+		str = supplement((length+4-length%4), string);
+		length = str.length();
+	}
+	char C[] = str.toCharArray();
+	
+	String M[] = new String[length/4];
+	for(int i=0;i<M.length;i++){
+		M[i] = "";
+	}
+	//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+	int M1[] = new int[length/4];
+
+	String s ="";  //进行二进制的累加
+	for(int i1=0;i1 < length;i1++)
+	{
+		M[i1/4] = M[i1/4]+C[i1];
+		if(i1%4 == 3) {
+			M1[i1/4] = Integer.parseInt(M[i1/4],2);
+				
+			s = s + M1[i1/4]; //加入string中
+		}
+	}
+		return s;		
+}
+
+
+/**
+ * 加密
+ * @param plainText
+ * @param pubkey
+ * @return
+ */
+public String encrypt(String plainText, String[] pubkey){
+	System.out.println("-----RSA开始加密-----");
+	BigInteger n = new BigInteger(pubkey[0]) ;
+	BigInteger e = new BigInteger(pubkey[1]) ;
+	plainText = BinaryToString2("1"+plainText);
+	//System.out.println(BinaryToString2(plainText));
+	BigInteger m = new BigInteger(plainText);
+	BigInteger c = m.modPow(e, n);
+	String	C=StringToBinary(c.toString());
+    return C.toString() ;
+}
+/**
+ * 解密
+ * @param cipherText
+ * @param selfkey
+ * @return
+ */
+public String decrypt(String cipherText, String[] selfkey){
+	System.out.println("-----RSA开始解密-----");
+	BigInteger n = new BigInteger(selfkey[0]) ;
+	BigInteger d = new BigInteger(selfkey[1]) ;
+	BigInteger c = new BigInteger(BinaryToString(cipherText));
+	BigInteger m = c.modPow(d, n);
+	String m2 = String.valueOf(m);
+	String	M = StringToBinary2(m2);
+	while(M.charAt(0) == '0')
+	M = M.replaceFirst("0", "");
+	
+	M = M.replaceFirst("1", "");
+	
+	return M.toString() ;
+}
+
+	
+	
+
+	
+	
+	
 }

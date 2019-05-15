@@ -48,7 +48,7 @@ public class Head {   //首部协议
 		existAuthenticator = "0";
 		number = "0000";
 		securityCode = "00";
-		expend = "0000";
+		expend = "0000000000000000";
 	}
 
 	@Override

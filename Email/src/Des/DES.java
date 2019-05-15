@@ -13,11 +13,10 @@ public class DES {
 		 */
 		public static String encrypt(String plainText, String sk) {
 			
-			System.out.println("-----加密------");
-			System.out.println("明文：");
-			System.out.println(plainText);
+			System.out.println("-----DES加密------");
+			System.out.println("明文："+plainText);
 			long t1=System.currentTimeMillis();
-			System.out.println("密钥：");
+			System.out.print("密钥：");
 			byte[] sKey = sk.getBytes();
 			for (int i = 0; i < sKey.length; i++) 
 			{
@@ -85,8 +84,8 @@ public class DES {
 	        start +=64;
 	        num+=64;
 			}
-			System.out.println("密文：");
-			System.out.println(ss);
+			System.out.println();
+			System.out.println("密文："+ss);
 			long t2=System.currentTimeMillis();
 	        System.out.println("加密时间："+(t2-t1)+"ms");
 			return ss;
@@ -99,11 +98,10 @@ public class DES {
 		 * @return            64位明文
 		 */
 		public static String decrypt(String cipherText, String sk) {
-			System.out.println("-----解密------");
+			System.out.println("-----DES解密------");
 	        long t3=System.currentTimeMillis();
-			System.out.println("密文：");
-			System.out.println(cipherText);
-			System.out.println("密钥：");
+			System.out.println("密文："+cipherText);
+			System.out.print("密钥：");
 			byte[] sKey = sk.getBytes();
 			for (int i = 0; i < sKey.length; i++) 
 			{
@@ -165,8 +163,7 @@ public class DES {
 	             }
 	             
 	        }
-			System.out.println("明文：");
-			System.out.println(ss);
+			System.out.println("明文："+ss);
 	        long t4=System.currentTimeMillis();
 	        System.out.println("解密时间："+(t4-t3)+"ms");
 			return ss;
