@@ -171,35 +171,7 @@ public class TGS {
 		}
  		return s;		
 	}
-	/**
-	 * 传入分离开的 Tickettgs 密文
-	 * 用 Ktgs 解密
-	 * @param Tickettgs
-	 * @return 返回解密的票据
-	 */
-	public DataStruct.Ticket AnalyseTicket(String Tickettgs){
-		//t解密
-		
-		DataStruct.Ticket ticket = new Ticket();
-		int len = Tickettgs.length();
-		char M[] = Tickettgs.toCharArray();
-		for(int i = 0;i<Tickettgs.length();i++)
-		{
-				if(i<64)
-					ticket.setSessionKey(ticket.getSessionKey()+M[i]);
-				else if(i<68)
-					ticket.setID(ticket.getID()+M[i]);
-				else if(i<100)
-					ticket.setIP(ticket.getIP()+M[i]);
-				else if(i<104)
-					ticket.setRequestID(ticket.getRequestID()+M[i]);
-				else if(i<104+56)
-					ticket.setTimeStamp(ticket.getTimeStamp()+M[i]);
-				else if(i<104+56+56)
-					ticket.setLifeTime(ticket.getLifeTime()+M[i]);
-			}
-		return ticket;
-	}
+
 	/**
 	 * 验证票据
 	 * 用 Kc,tgs 解开 Authenticator
@@ -326,7 +298,7 @@ public class TGS {
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
 		
-		DataStruct.Head h= new DataStruct.Head(clientID,TGSID,"0","1","0","1","1","1","1","0",number,"00","0000000000000000");
+		DataStruct.Head h= new DataStruct.Head(clientID,TGSID,"0","1","0","1","1","0","1","0",number,"00","0000000000000000");
 		p.setHead(h);
 		
 		return p;
@@ -345,7 +317,8 @@ public class TGS {
 		String send = p.toString();
 		String lt = p.getLifeTime();
 		String ts = p.getTimeStamp();
-		
+
+		System.out.println("打包："+p);		
 		
 		if(p.getHead().getExistTS() == "1") {
 			s = StringToBinary(p.getTimeStamp());

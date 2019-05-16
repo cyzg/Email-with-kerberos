@@ -12,6 +12,7 @@ import java.util.Enumeration;
 
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
+import Des.DES;
 
 public class Client {
 	
@@ -19,7 +20,7 @@ public class Client {
 	private final int MAXNUMBER = 0; //包的最大编号
 	private final static String ASID = "0001"; //ASID
 	private final static String TGSID = "0010"; 
-	private final static String SERVERID = "0011"; 
+	private final static String SERVERID = "0011";
 	private final static String[] selfK ={"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977" , "1152163794881094595676879571359995304125912323044089952277703799112846640042039256420690483427161040887459792478554485040196767218736825329254102072887596847184101841933983341452289"}; //client私钥
 	 
 	/**
@@ -97,7 +98,7 @@ public class Client {
 		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
 		tic = supplement(16, StringToBinary(tic));
 		
-		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","1","0","0","1","1",number,"00",tic);
+		DataStruct.Head h= new DataStruct.Head(TGSID,clientID1,"0","0","0","1","0","0","1","1",number,"00",tic);
 		p.setHead(h);
 		return p;
 	}
@@ -115,6 +116,7 @@ public class Client {
 		
 		p.setTicket(ticketV);
 		p.setAuth(authV);
+		p.setTimeStamp(DataStruct.Package.Create_TS());
 		
 		if(Number > 16)
 		{
@@ -125,7 +127,7 @@ public class Client {
 		
 		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
 		tic = supplement(16, StringToBinary(tic));
-		DataStruct.Head h= new DataStruct.Head(clientID1,TGSID,"0","0","0","0","0","0","1","1",number,"00",tic);
+		DataStruct.Head h= new DataStruct.Head(TGSID,clientID1,"0","0","0","0","0","0","1","1",number,"00",tic);
 		p.setHead(h);
 		
 		return p;
@@ -149,8 +151,6 @@ public class Client {
 		a.setTimeStamp("");
 		char M[] = cipher.toCharArray();
 
-		System.out.println("ci");
-		System.out.println(cipher.length());
 		for(int i = 0;i<cipher.length();i++)
 		{
 			if(i<4) {
@@ -356,7 +356,7 @@ public class Client {
 	 * @param k1 Package密钥
 	 * @return 返回对应的数据
 	 */
-	static DataStruct.Package packageAnalyse(String message,String k1){
+	static DataStruct.Package packageAnalyse(String message,String k){
 		System.out.println("-----开始解析包-----");
 		DataStruct.Package p = new DataStruct.Package();
 		int headLength = p.getHead().headOutput().length();
@@ -371,8 +371,8 @@ public class Client {
 						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] ,
 						s[22]+s[23]+s[24]+s[25]+s[26]+s[27]+s[28]+s[29]+s[30]+s[31]+s[32]+s[33]+s[34]+s[35]+s[36]+s[37] ));
 			
-		
-		if(p.getHead().getExistSessionKey().equals("0")) {
+		System.out.println(p.getHead());
+		if(p.getHead().getExistSessionKey().equals("0") && p.getHead().getExistTS().equals("0")) {
 				System.out.println("传送");
 			for(int i = headLength;i<message.length();i++)
 			{	
@@ -380,7 +380,7 @@ public class Client {
 		}
 		else if(p.getHead().getExistLifeTime().equals("1")) {
 			//说明是AS发的
-			//package解密 用t1
+			//package解密 用client私钥
 			String m = message.replaceFirst(p.getHead().headOutput(),"");
 			RSA.rsa rsa = new RSA.rsa();	
 			message = rsa.decrypt(m, selfK);
@@ -425,36 +425,76 @@ public class Client {
 			p.setTimeStamp(BinaryToString(string));
 			p.setLifeTime(BinaryToString(p.getLifeTime()));
 			
-//			ticket.setTimeStamp(BinaryToString(ticket.getTimeStamp()));
-//			ticket.setLifeTime(BinaryToString(ticket.getLifeTime()));
 			p.setTicket(ticket);
 		}
 		else if(p.getHead().getExistTicket().equals("1")){
-			for(int i = headLength;i<message.length();i++)
-			{
-					if(i<headLength+4)
-					p.setID(p.getID()+M[i]);
-					else if(i<headLength+8)
-					p.setRequestID(p.getRequestID()+M[i]);
-					else if(i<headLength+64)
-						p.setTimeStamp(p.getTimeStamp()+M[i]);
-					else {
-							System.err.println("分析发现TGS发过来的package长度有误，请检查！！");
-						       System.exit(0);
-						}
+			//说明是TGS发的
+			//package解密 用Ktgs，c 传参进来k
+			String m = message.replaceFirst(p.getHead().headOutput(),"");
+			message = DES.decrypt(m, k);
+			char C[] = message.toCharArray();
+			//解包
+			int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));
+			DataStruct.Ticket ticket = new Ticket();
+			for(int i = 0;i<message.length();i++)
+			{	
+				if(i<64)
+					p.setSessionKey(p.getSessionKey()+C[i]);
+				else if(i<68)
+					p.setRequestID(p.getRequestID()+C[i]);
+				else if(i<68+56)
+					p.setTimeStamp(p.getTimeStamp()+C[i]);
+				else if(i<68+56+tic+1){
+					if(i<68+56+64)
+						ticket.setSessionKey(ticket.getSessionKey()+C[i]);
+					else if(i<68+56+68)
+						ticket.setID(ticket.getID()+C[i]);
+					else if(i<68+56+100)
+						ticket.setIP(ticket.getIP()+C[i]);
+					else if(i<68+56+104)
+						ticket.setRequestID(ticket.getRequestID()+C[i]);
+					else if(i<68+56+104+56)
+						ticket.setTimeStamp(ticket.getTimeStamp()+C[i]);
+					else 
+						ticket.setLifeTime(ticket.getLifeTime()+C[i]);
 				}
+				else {
+						System.err.println("分析发现TGS发过来的package长度有误，请检查！！");
+					       System.exit(0);
+				}
+			}	
+
+			String string = p.getTimeStamp();
+			p.setTimeStamp(BinaryToString(string));
+			p.setTicket(ticket);
+		}
+		else if(p.getHead().getExistTS().equals("1")){
+			//说明是V发的
+			//package解密 用Ktgs，c 传参进来k
+			String m = message.replaceFirst(p.getHead().headOutput(),"");
+			message = DES.decrypt(m, k);
+			
+			p.setTimeStamp(BinaryToString(message));
 		}
 		//p.setTimeStamp(BinaryToString(p.getTimeStamp()));
 		System.out.println("分析的包："+ p);
 		return p ;
 	}
-	
-	//不加密的
-	DataStruct.Package packageAnalyse(String message){
-
-		 return new DataStruct.Package();
-	}
-	
+	/**
+	 * 验证包
+	 * @param p 分析完的包
+	 * @return 包是正确的返回true
+	 */
+    public static boolean verifyPackage(DataStruct.Package p,String TS){
+    	//调用数据库，查看ID是否属实
+    	  if(!p.getTimeStamp().equals(DataStruct.Package.Create_lifeTime(TS, 1)))
+    	  {
+    		  System.err.println("V发过来时间不符！！！");
+    		  return false;
+    	  }
+    	
+    	return true;
+    }    
 	public static InetAddress getIpAddress() {
 	    try {
 	      Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -526,7 +566,8 @@ public class Client {
 		System.out.println("-------连接AS--------");
         System.out.println("client on");
         
-    	Socket socket = new Socket("192.168.1.103",5555);
+        //发给AS
+    	Socket socket = new Socket("192.168.1.101",5555);
     	System.out.println("发送："+packageToBinary(p));
         String message =packageToBinary(p);
         String s = "";
@@ -535,20 +576,46 @@ public class Client {
         	socket.close();
         } 
     	DataStruct.Package p2= packageAnalyse(s, null);
+    	
 		System.out.println("-------连接TGS--------");
-        
     	clientIP = DataStruct.Package.ipToBinary(getIpAddress());
 
     	Client c = new Client();
     	p = c.clientToTGS(clientID, c.SERVERID, p2.getTicket(), c.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
     	System.out.println("发给TGS的包"+p);
-        socket = new Socket("192.168.1.104",5555);
+        message =packageToBinary(p);
+    	System.out.println("发送："+message);
+    	
+    	//发给TGS
+        socket = new Socket("192.168.1.106",5555);
+        if(send(socket,message)) {
+        	s = receive(socket);
+        	socket.close();
+        } 
+    	DataStruct.Package p3= packageAnalyse(s, p2.getSessionKey());
+		System.out.println("-------连接V--------");
+    	p = c.clentToV(clientID, p3.getTicket(), c.generateAuth(p3.getHead().getDestID(),clientIP,p3.getSessionKey()));
+    	String TSv = p.getTimeStamp();
+    	p.setTimeStamp("");
+    	System.out.println("发给V的包"+p);
     	
         message =packageToBinary(p);
+    	System.out.println("发送："+message);
+    	
+    	//发给V
+        socket = new Socket("192.168.1.104",5555);
+    	
     	if(send(socket,message)) {
     	s = receive(socket);
     	socket.close();
     	}
+    	DataStruct.Package p4= packageAnalyse(s, p3.getSessionKey());
+    	if(verifyPackage(p4, TSv)) {
+    		System.out.println("验证成功，开始与Server连接...");
+    	}
+    	else
+    		System.err.println("验证失败，请重新登录");
+    		
 	}
 }
 

@@ -1,6 +1,7 @@
 package DataStruct;
 
 import java.net.InetAddress;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -32,7 +33,27 @@ public class Package{
 		  Date afterDate = new Date(now .getTime() + time*60000);
 			return sdf.format(afterDate);
 	   }
-
+	/**
+	 * 
+	 * @param time存活时间（分钟）
+	 * @return
+	 */
+	 public static String Create_lifeTime(String strDate,int time)
+	    {
+	        //注意：SimpleDateFormat构造函数的样式与strDate的样式必须相符
+	        SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyyMMddHHmmss");
+	        SimpleDateFormat sDateFormat=new SimpleDateFormat("yyyyMMddHHmmss"); //加上时间
+	        //必须捕获异常
+	        try {
+	            Date date=simpleDateFormat.parse(strDate);
+	            Date afterDate = new Date(date.getTime() + time*60000);
+	            return sDateFormat.format(afterDate);
+	        } catch(ParseException px) {
+	            px.printStackTrace();
+	        }
+			return strDate;
+	   }
+	 
     public static String Create_TS()
     {
     	SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
