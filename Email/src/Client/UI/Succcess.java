@@ -71,7 +71,7 @@ public class Succcess extends JFrame{
 	 */
 	public Succcess() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 275);
+		setBounds(650, 400, 450, 275);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -85,6 +85,7 @@ public class Succcess extends JFrame{
 		JButton button = new JButton("\u8FD4\u56DE");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				dispose();
 				WELCOME frame = new WELCOME();
 				frame.setVisible(true);
 			}

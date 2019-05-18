@@ -504,7 +504,7 @@ public class AS {
 		 AP ui = new AP();
 		 ui.setVisible(true);
 		 int port=5555;
-		 Receiver r = new Receiver(ui);
-		 new Thread(r.listener(port)).start();
+		 Receiver r = new Receiver();
+		 new Thread(r.listener(port,ui)).start();
 	}
 }

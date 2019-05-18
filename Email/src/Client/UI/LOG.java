@@ -27,7 +27,7 @@ public class LOG extends JFrame {
 	/**
 	 * Launch the application.
 	 */
-	public static void RUN() {
+	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -46,7 +46,7 @@ public class LOG extends JFrame {
 	public LOG() {
 		setTitle("\u65B0\u7528\u6237\u6CE8\u518C");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 428, 284);
+		setBounds(650, 400, 428, 284);
 		back = new JPanel();
 		back.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(back);
@@ -94,14 +94,26 @@ public class LOG extends JFrame {
 
 		log.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {      		  //注册按钮S
-				String s = null;                         
+				String s = "";                         
 				s = signinrun();
-				if((s.equals("1")) ) 
+				if(s == "2") {
+					System.err.println("用户名和密码不能为空，注册失败！");
+					Not_null frame7 = new Not_null();
+					frame7.setVisible(true);
+				}
+				else if((s.equals("1")) ) {
 					System.err.println("该id已被注册！");
-				else if(s == null)
+					ID_USED id_ueser = new ID_USED();
+					id_ueser.setVisible(true);
+				}
+				else if(s.equals("")) {
 					System.err.println("注册失败！");
+					SIGN_FALSE sign_false = new SIGN_FALSE();
+					sign_false.setVisible(true);
+				}
 				else{
 					System.out.println("注册成功！");
+					dispose();
 					Succcess frame2 = new Succcess();
 					frame2.setVisible(true);
 				}
@@ -112,21 +124,26 @@ public class LOG extends JFrame {
 	{
 		String k[][] = RSA.keymanger.keymanger();
 		Sk = k[1];
-		DataStruct.Package p = Client.signin(name.getText(),pw.getText(),k[0]);
-		String send = p.getHead().headOutput()+p.packageOutput();
-		String re = null;
-    	//发给AS
-		try {
-	        Socket socket = new Socket("192.168.1.101",5555);
-	        if(Client.send(socket,send)) {
-	        	re = Client.receive(socket);
-				socket.close();
-	        }
-		} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+		System.out.println(name.getText());
+		if(!(name.getText().equals("") || pw.getText().equals(""))) {
+				
+			DataStruct.Package p = Client.signin(name.getText(),pw.getText(),k[0]);
+			String send = p.getHead().headOutput()+p.packageOutput();
+			String re = null;
+	    	//发给AS
+			try {
+		        Socket socket = new Socket("192.168.1.111",5555);
+		        if(Client.send(socket,send)) {
+		        	re = Client.receive(socket);
+					socket.close();
+		        }
+			} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 		}
 		return re;
+		}
+		else return "2";
 	}
 }
 

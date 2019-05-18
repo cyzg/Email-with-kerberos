@@ -13,6 +13,7 @@ import java.util.Enumeration;
 import com.mysql.cj.DataStoreMetadata;
 
 import Client.UI.LOG;
+import Client.UI.WELCOME;
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
 import Des.DES;
@@ -599,8 +600,8 @@ public class Client {
 	 * @throws UnknownHostException 
 	 */
 	public static void main(String[] args) throws IOException {
-		LOG log = new LOG();
-		log.setVisible(true);
+		WELCOME frame = new WELCOME();
+		frame.setVisible(true);
 	}
 }
 

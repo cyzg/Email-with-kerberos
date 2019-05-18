@@ -3,7 +3,7 @@ package TGS;
 import java.io.IOException;
 import java.net.Socket;
 
-import AS.Receiver;
+import TGS.UI.AP;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -449,7 +449,10 @@ public class TGS {
 	} 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		 System.out.println("-------TGS´ò¿ª----------");
-		int port=5555;
-		new Thread(TGSReceiver.listener(port)).start();
+		 AP ui = new AP();
+		 ui.setVisible(true);
+		 int port=5555;
+		 TGSReceiver r = new TGSReceiver();
+		 new Thread(r.listener(port,ui)).start();
 	}
 }

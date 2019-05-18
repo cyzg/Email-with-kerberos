@@ -8,7 +8,7 @@ import java.net.Socket;
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
 import Des.DES;
-import TGS.TGSReceiver;
+import Server.UI.AP;
 
 public class V {
 
@@ -322,6 +322,9 @@ public class V {
 	public static void main(String[] args) throws IOException, InterruptedException{
 		 System.out.println("-------V´ò¿ª----------");
 		int port=5555;
-		new Thread(VReceiver.listener(port)).start();
+		AP ui = new AP();
+		ui.setVisible(true);
+		VReceiver r = new VReceiver();
+		new Thread(r.listener(port,ui)).start();
 	}
 }

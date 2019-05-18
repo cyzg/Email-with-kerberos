@@ -11,7 +11,6 @@ import java.sql.Statement;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import AS.UI.TEEEST;
 
 public class DBconncet {
 	protected static final String JTextField = null;

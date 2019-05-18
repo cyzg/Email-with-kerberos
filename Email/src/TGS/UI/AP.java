@@ -1,36 +1,25 @@
-package AS.UI;
+package TGS.UI;
 
-import java.awt.BorderLayout;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.text.JTextComponent;
 import javax.swing.JLabel;
 import java.awt.Font;
-import javax.swing.JTextField;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import javax.swing.JList;
-import javax.swing.JComboBox;
-import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
-import java.awt.ScrollPane;
 
 public class AP extends JFrame {
 
 	private JPanel contentPane;
-	private JTextArea txt1=new JTextArea();
-	private JTextArea txt2=new JTextArea();
 	
 	private JTextArea textArea_receive;
 	private JTextArea textArea_send;
 
-	private String text1;
-	private String text2;
 	/**
 	 * Launch the application.
 	 */
@@ -125,10 +114,4 @@ public class AP extends JFrame {
 		else this.textArea_send.setText(s);
 	}
 
-	public String getText1(){
-		return text1;
-	}
-	public String getText2(){
-		return text2;
-	}
 }

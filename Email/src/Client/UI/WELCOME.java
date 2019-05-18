@@ -6,6 +6,8 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 
@@ -37,15 +39,12 @@ public class WELCOME extends JFrame {
 
 	private JPanel contentPane;
 	private JTextField textField;
-	private JTextField textField_1;
-	private JTextField txt1=new JTextField();
-	private JTextField txt2= new JTextField();
-	
+	private JTextField textField_1;	
 	
 	private String text1;
 	private String text2;
-	private JTextArea textField_2;
-
+	//private JTextArea textField_2;
+	private JTextArea message1;
 	
 	/**
 	 * Launch the application.
@@ -67,67 +66,138 @@ public class WELCOME extends JFrame {
 	 * Create the frame.
 	 */
 	public WELCOME() {
-		setTitle("                           Welcome");
+		setTitle("   ");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(500, 300, 1000, 579);
+		setBounds(500, 300, 855, 475);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		
 		JLabel ID = new JLabel("User\uFF1A");
-		ID.setBounds(43, 76, 72, 18);
+		ID.setBounds(43, 167, 72, 18);
 		ID.setFont(new Font("仿宋", Font.PLAIN, 18));
 		
 		JLabel password = new JLabel("\u5BC6\u7801\uFF1A");
-		password.setBounds(43, 127, 72, 18);
+		password.setBounds(43, 267, 72, 18);
 		password.setFont(new Font("仿宋", Font.PLAIN, 18));
 		
 		textField = new JTextField();
-		textField.setBounds(129, 73, 176, 24);
+		textField.setBounds(129, 164, 176, 24);
 		textField.setFont(new Font("仿宋", Font.PLAIN, 18));
 		textField.setColumns(10);
 		textField_1 = new JTextField();
-		textField_1.setBounds(129, 126, 176, 24);
+		textField_1.setBounds(129, 264, 176, 24);
 		textField_1.setFont(new Font("仿宋", Font.PLAIN, 18));
 		textField_1.setColumns(10);
 		
-		textField_2 = new JTextArea();
-		textField_2.setForeground(Color.BLACK);
-		textField_2.setWrapStyleWord(true);
-		textField_2.setLineWrap(true);
-		textField_2.setBounds(411, 37, 219, 184);
-		contentPane.add(textField_2);
-		textField_2.setEnabled(false);
-		textField_2.setEditable(false);
-		textField_2.setColumns(10);
-	
+		JLabel lblAs = new JLabel("\u6D88\u606F\u65E5\u5FD7");
+		lblAs.setBounds(585, 17, 72, 18);
+		lblAs.setFont(new Font("仿宋", Font.PLAIN, 18));
+		contentPane.setLayout(null);
 		
+		JScrollBar scrollBar_TGS = new JScrollBar();
+		JTextArea text=new JTextArea();
+		scrollBar_TGS.setBounds(371, 264, 21, 173);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(437, 48, 366, 358);
+		contentPane.add(scrollPane);
+		
+		message1 = new JTextArea();
+		message1.setLineWrap(true);
+		message1.setEditable(false);
+		message1.setForeground(Color.GRAY);
+		message1.setFont(new Font("仿宋", Font.PLAIN, 18));
+		message1.setColumns(10);
+		scrollPane.setViewportView(message1);
+		
+		
+		
+	
 		JButton button = new JButton("\u6CE8\u518C");
-		button.setBounds(296, 13, 72, 27);
+		button.setBounds(296, 98, 72, 27);
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+				dispose();
 				LOG frame1=new LOG();
 				frame1.setVisible(true);
-				
 			}
 		});
 		button.setFont(new Font("仿宋", Font.PLAIN, 18));
 		
 		JButton button_1 = new JButton("\u767B\u5F55");
-		button_1.setBounds(296, 194, 72, 27);
+		button_1.setBounds(296, 367, 72, 27);
 		button_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
 				String s = null;                         
 				s = loginrun();				
 				if((s.equals("1")) ) 
+				{
+					message1.setText("账号或密码错误！");
 					System.err.println("账号或密码错误！");
+					PW_FALSE pw_false = new PW_FALSE();
+					pw_false.setVisible(true);
+				}
+				else if((s.equals("2")) ) {
+					message1.setText("用户名和密码不能为空!");
+					System.err.println("用户名和密码不能为空!");
+					Not_null frame7 = new Not_null();
+					frame7.setVisible(true);
+				}
 				else{
+					message1.setText("账号密码正确！");
 					System.out.println("账号密码正确！");
 					try {
-						if(kerberos(s))
+						boolean keb= false;
+						System.out.println("--client--");
+
+						DataStruct.Package p= new DataStruct.Package();
+
+						String clientID = s;
+				    	String clientIP = "";
+						
+						p = Client.clientToAS(clientID, Client.TGSID );
+						System.out.println("发给AS的包："+p.toString());
+						message1.setText("发给AS的包:"+p.toString());
+						message1.setText(message1.getText()+"\r\n-------连接AS--------");
+						System.out.println("-------连接AS--------");
+				        
+				        //发给AS
+				    	/**/Socket socket = new Socket("192.168.1.111",5555);
+				        String message =Client.packageToBinary(p);
+				        String rmessage = "";
+				        if(Client.send(socket,message)) {
+				        	rmessage = Client.receive(socket);
+				        	try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+				        	if(rmessage.equals(""))
+				        	{
+				        		message1.setText(message1.getText()+"\r\n未收到内容，请重新发送");
+				        		System.err.println("未收到内容，请重新发送");
+				            	socket.close();
+				        	}
+				        	socket.close();
+				        } 
+
+				        DataStruct.Package p2= Client.packageAnalyse(rmessage, null);
+						message1.setText(message1.getText()+"\r\n收到AS的包："+p2.toString());
+				    	if(p2.packageOutput().equals("")) {
+				    		System.err.println("AS发送的包有误，请重新发送！！");
+				    	}
+						System.out.println("-------连接TGS--------");
+				    	clientIP = DataStruct.Package.ipToBinary(Client.getIpAddress());
+
+				    	p = Client.clientToTGS(clientID, Client.SERVERID, p2.getTicket(), Client.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
+				    	System.out.println("发给TGS的包"+p);
+				        message =Client.packageToBinary(p);
+						if(keb)
 						{
+							//dispose();
 							Send_email frame3 = new Send_email();
 							frame3.setVisible(true);
 						}
@@ -144,18 +214,20 @@ public class WELCOME extends JFrame {
 		});
 		button_1.setFont(new Font("仿宋", Font.PLAIN, 18));
 			
-		JLabel label = new JLabel("\u6D88\u606F\u65E5\u5FD7");
-		label.setBounds(474, 17, 72, 18);
-		label.setFont(new Font("仿宋", Font.PLAIN, 18));
 		contentPane.setLayout(null);
+		contentPane.add(text);
 		contentPane.add(ID);
 		contentPane.add(password);
 		contentPane.add(textField);
 		contentPane.add(button);
 		contentPane.add(button_1);
 		contentPane.add(textField_1);
-		contentPane.add(textField_2);
-		contentPane.add(label);
+				contentPane.add(lblAs);
+		
+		JLabel lblwelcome = new JLabel("*********  Welcome  *********");
+		lblwelcome.setFont(new Font("仿宋", Font.PLAIN, 18));
+		lblwelcome.setBounds(62, 17, 272, 37);
+		contentPane.add(lblwelcome);
 	}
 	
 	public String getText1(){
@@ -166,21 +238,24 @@ public class WELCOME extends JFrame {
 	}
 	String loginrun()
 	{
-		DataStruct.Package p = Client.login(textField.getText(),textField_1.getText());
-		String send = p.getHead().headOutput()+p.packageOutput();
-		String re = null;
-    	//发给AS
-		try {
-	        Socket socket = new Socket("192.168.1.111",5555);
-	        if(Client.send(socket,send)) {
-	        	re = Client.receive(socket);
-				socket.close();
-	        }
-		} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-		} 
-    		return re;
+		if(!(textField.getText().equals("") || textField_1.getText().equals(""))) {
+			DataStruct.Package p = Client.login(textField.getText(),textField_1.getText());
+			String send = p.getHead().headOutput()+p.packageOutput();
+			String re = null;
+	    	//发给AS
+			try {
+		        Socket socket = new Socket("192.168.1.111",5555);
+		        if(Client.send(socket,send)) {
+		        	re = Client.receive(socket);
+					socket.close();
+		        }
+			} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+			} 
+	    		return re;
+		}
+		return "2";
 	}
 
 	boolean kerberos(String id) throws UnknownHostException, IOException
@@ -191,12 +266,11 @@ public class WELCOME extends JFrame {
 
 		String clientID = id;
     	String clientIP = "";
-		String TS1 = DataStruct.Package.Create_TS();
 		
 		p = Client.clientToAS(clientID, Client.TGSID );
 		System.out.println("发给AS的包："+p.toString());
-		textField_2.setText("发给AS的包"+p.toString());
-		textField_2.setText(textField_2.getText()+"\r\n-------连接AS--------");
+		message1.setText("发给AS的包"+p.toString());
+		message1.setText(message1.getText()+"\r\n-------连接AS--------");
 		System.out.println("-------连接AS--------");
         
         //发给AS
@@ -211,8 +285,9 @@ public class WELCOME extends JFrame {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-        	if(s == "")
+        	if(s.equals(""))
         	{
+        		message1.setText(message1.getText()+"\r\n未收到内容，请重新发送");
         		System.err.println("未收到内容，请重新发送");
             	socket.close();
         	}
@@ -220,18 +295,17 @@ public class WELCOME extends JFrame {
         } 
 
         DataStruct.Package p2= Client.packageAnalyse(s, null);
-		textField_2.setText("收到AS的包："+p2.toString());
-    	if(p2 == null) {
+		message1.setText("收到AS的包："+p2.toString());
+    	if(p2.packageOutput().equals("")) {
     		System.err.println("AS发送的包有误，请重新发送！！");
     	}
-        
 		System.out.println("-------连接TGS--------");
     	clientIP = DataStruct.Package.ipToBinary(Client.getIpAddress());
 
     	p = Client.clientToTGS(clientID, Client.SERVERID, p2.getTicket(), Client.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
     	System.out.println("发给TGS的包"+p);
         message =Client.packageToBinary(p);
-    	//发给TGS
+    	/*//发给TGS
         socket = new Socket("192.168.1.106",5555);
         if(Client.send(socket,message)) {
         	s = Client.receive(socket);
@@ -263,6 +337,7 @@ public class WELCOME extends JFrame {
     	else {
     		System.err.println("kerberos认证失败，请重试");
     		return false;
-    	}	
+    	}*/	
+        return true;
 	}
 }
