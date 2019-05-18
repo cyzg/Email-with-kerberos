@@ -40,9 +40,9 @@ public class AP extends JFrame {
 	 * Create the frame.
 	 */
 	public AP() {
-		setTitle("AS");
+		setTitle("TGS");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 757, 604);
+		setBounds(550, 240, 757, 604);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);

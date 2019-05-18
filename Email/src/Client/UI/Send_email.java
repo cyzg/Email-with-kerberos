@@ -44,7 +44,7 @@ public class Send_email extends JFrame {
 	public 	Send_email() {
 		setTitle("\u4EB2\u7231\u7684User");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 687, 356);
+		setBounds(520, 320, 687, 356);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -54,6 +54,7 @@ public class Send_email extends JFrame {
 		button.setBounds(323, 7, 78, 27);
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				dispose();
 				WELCOME frame = new WELCOME();
 				frame.setVisible(true);
 				

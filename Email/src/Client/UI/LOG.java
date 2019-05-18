@@ -132,7 +132,7 @@ public class LOG extends JFrame {
 			String re = null;
 	    	//·¢¸øAS
 			try {
-		        Socket socket = new Socket("192.168.1.111",5555);
+		        Socket socket = new Socket(Client.ASIP,5555);
 		        if(Client.send(socket,send)) {
 		        	re = Client.receive(socket);
 					socket.close();

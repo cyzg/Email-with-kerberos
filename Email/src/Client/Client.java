@@ -10,9 +10,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
-import com.mysql.cj.DataStoreMetadata;
-
-import Client.UI.LOG;
 import Client.UI.WELCOME;
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
@@ -26,7 +23,9 @@ public class Client {
 	public final static String TGSID = "1110"; 
 	public final static String SERVERID = "1111"; 
 	private final static String[] selfK ={"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977" , "1152163794881094595676879571359995304125912323044089952277703799112846640042039256420690483427161040887459792478554485040196767218736825329254102072887596847184101841933983341452289"}; //client私钥
-	 
+	public static String ASIP = "192.168.1.104";
+	public static String TGSIP = "192.168.1.100";
+	public static String SERVERIP = "192.168.1.110";
 	/**
 	 * 把str补齐到n位，高位写0
 	 * @param n 
@@ -478,7 +477,7 @@ public class Client {
 				//package解密 用Kv，c 传参进来k
 				String m = message.replaceFirst(p.getHead().headOutput(),"");
 				message = DES.decrypt(m, k);
-				p.setTimeStamp(BinaryToString(p.getTimeStamp()));
+				p.setTimeStamp(BinaryToString(message));
 			}	
 			System.out.println("分析的包："+ p);
 			return p ;

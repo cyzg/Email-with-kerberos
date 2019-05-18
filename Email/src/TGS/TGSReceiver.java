@@ -82,7 +82,7 @@ public class TGSReceiver extends Thread{
 						sc= server.accept();
 						if(sclast!=sc) {	
 					
-							Thread thread =new TGSReceiver(sc);
+							Thread thread =new TGSReceiver(sc,ui);
 							thread.start();
 				        	try {
 								Thread.sleep(100);
