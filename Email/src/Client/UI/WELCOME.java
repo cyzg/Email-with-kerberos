@@ -160,7 +160,7 @@ public class WELCOME extends JFrame {
 						p = Client.clientToAS(clientID, Client.TGSID );
 						System.out.println("发给AS的包："+p.toString());
 						message1.setText("发给AS的包:"+p.toString());
-						message1.setText(message1.getText()+"\r\n-------连接AS--------");
+						message1.setText(message1.getText()+"\r\n-------连接AS--------\\r\\n");
 						System.out.println("-------连接AS--------");
 				        
 				        //发给AS
@@ -177,24 +177,64 @@ public class WELCOME extends JFrame {
 							}
 				        	if(rmessage.equals(""))
 				        	{
-				        		message1.setText(message1.getText()+"\r\n未收到内容，请重新发送");
+				        		message1.setText(message1.getText()+"\r\n未收到内容，请重新发送!!\\r\\n");
 				        		System.err.println("未收到内容，请重新发送");
 				            	socket.close();
 				        	}
 				        	socket.close();
 				        } 
-
+				      //发给TGS
 				        DataStruct.Package p2= Client.packageAnalyse(rmessage, null);
 						message1.setText(message1.getText()+"\r\n收到AS的包："+p2.toString());
 				    	if(p2.packageOutput().equals("")) {
+			        		message1.setText(message1.getText()+"\r\nAS发送的包有误，请重新发送！！\r\n");
 				    		System.err.println("AS发送的包有误，请重新发送！！");
 				    	}
+						message1.setText(message1.getText()+"\r\n-------连接TGS--------\r\n");
 						System.out.println("-------连接TGS--------");
 				    	clientIP = DataStruct.Package.ipToBinary(Client.getIpAddress());
 
 				    	p = Client.clientToTGS(clientID, Client.SERVERID, p2.getTicket(), Client.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
 				    	System.out.println("发给TGS的包"+p);
+						message1.setText(message1.getText()+"\r\n发给TGS的包:"+p.toString());
+						
 				        message =Client.packageToBinary(p);
+				        socket = new Socket("192.168.1.106",5555);
+				        if(Client.send(socket,message)) {
+				        	rmessage = Client.receive(socket);
+				        	socket.close();
+				        } 
+				        DataStruct.Package p3= Client.packageAnalyse(rmessage, p2.getSessionKey());
+
+						message1.setText(message1.getText()+"\r\n-------连接V--------\r\n");
+						System.out.println("-------连接V--------");
+				    	p = Client.clentToV(clientID, p3.getTicket(), Client.generateAuth(p3.getHead().getDestID(),clientIP,p3.getSessionKey()));
+				    	String TSv = p.getTimeStamp();
+				    	p.setTimeStamp("");
+				    	
+						message1.setText(message1.getText()+"\r\n发给V的包:"+p.toString());
+				    	System.out.println("发给V的包"+p);
+				    	
+				        message =Client.packageToBinary(p);
+				    	
+				    	//发给V
+				        socket = new Socket("192.168.1.101",5555);
+				    	
+				    	if(Client.send(socket,message)) {
+				    		rmessage = Client.receive(socket);
+				    	socket.close();
+				    	}
+				    	DataStruct.Package p4= Client.packageAnalyse(rmessage, p2.getSessionKey());
+				    	if(Client.verifyPackage(p4, TSv)) {
+							message1.setText(message1.getText()+"\r\nkerberos认证成功，进入Email！");
+				    		System.out.println("kerberos认证成功，进入Email！");
+				    		keb = true;
+				    	}
+				    	else {
+							message1.setText(message1.getText()+"\r\nkerberos认证失败，请重试！");
+				    		System.err.println("kerberos认证失败，请重试!");
+				    		keb =  false;
+				    	}
 						if(keb)
 						{
 							//dispose();
