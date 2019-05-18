@@ -26,6 +26,9 @@ public class VReceiver extends Thread{
 		        	V v = new V();
 		        	System.out.println("-------开始处理包-------");
 		        	DataStruct.Package p = v.packAnalyse(rmessage);
+		        	if(p == null) {
+		        		System.err.println("client发送的包有误，请重新发送！！");
+		        	}
 		        	if(v.checkIdentity(p)) {
 		        		smessage = v.packData(p.getHead().getSourceID(),p.getAuth().getTimeStamp(),p.getTicket().getSessionKey());//打包并发送
 		        	}

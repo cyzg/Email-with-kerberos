@@ -26,6 +26,9 @@ public class TGSReceiver extends Thread{
 		        	TGS tgs = new TGS();
 		        	System.out.println("-------开始处理包-------");
 		        	DataStruct.Package p = tgs.packAnalyse(rmessage);
+		        	if(p == null) {
+		        		System.err.println("client发送的包有误，请重新发送！！");
+		        	}
 		        	if(tgs.checkIdentity(p)) {
 		        		DataStruct.Ticket TicketTgs = tgs.generateTicketV(p,s.getInetAddress());
 		        		DataStruct.Package p2 = tgs.packData(p.getHead().getSourceID(),p.getRequestID(),TicketTgs);

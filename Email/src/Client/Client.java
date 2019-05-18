@@ -10,6 +10,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
+import com.mysql.cj.DataStoreMetadata;
+
+import Client.UI.LOG;
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
 import Des.DES;
@@ -18,9 +21,9 @@ public class Client {
 	
 	private static int Number = -1; //包的初始编号
 	private final int MAXNUMBER = 0; //包的最大编号
-	private final static String ASID = "0001"; //ASID
-	private final static String TGSID = "0010"; 
-	private final static String SERVERID = "0011";
+	private final static String ASID = "1101"; //ASID
+	public final static String TGSID = "1110"; 
+	public final static String SERVERID = "1111"; 
 	private final static String[] selfK ={"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977" , "1152163794881094595676879571359995304125912323044089952277703799112846640042039256420690483427161040887459792478554485040196767218736825329254102072887596847184101841933983341452289"}; //client私钥
 	 
 	/**
@@ -47,14 +50,12 @@ public class Client {
 	 * @param TS1 时间戳
 	 * @return 返回封装完成的包
 	 */
-	 static DataStruct.Package clientToAS(int clientID,String tgsID,String TS1){ 
+	 public static DataStruct.Package clientToAS(String clientID,String tgsID){ 
 		DataStruct.Package p= new DataStruct.Package();
 		
-		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
-		
-		p.setID(clientID1); 
+		p.setID(clientID); 
 		p.setRequestID(tgsID);
-		p.setTimeStamp(TS1);
+		p.setTimeStamp(DataStruct.Package.Create_TS());
 		
 		if(Number > 16)
 		{
@@ -62,9 +63,8 @@ public class Client {
 		}
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
-		String securityCode = "00";
-		//String securityCode = StringToBinary(Integer.toBinaryString(p.hashCode()));
-		DataStruct.Head h= new DataStruct.Head(ASID,clientID1,"0","0","1","1","1","0","0","0",number,securityCode,"0000000000000000");
+		String securityCode = DataStruct.Head.zero(128);
+		DataStruct.Head h= new DataStruct.Head(ASID,clientID,"0","0","1","1","1","0","0","0",number,securityCode,"0000000000000000");
 		p.setHead(h);
 		
 		return p;
@@ -78,10 +78,8 @@ public class Client {
 	 * @param authTGS client发送给TGS的认证
 	 * @return 返回封装完成的包
 	 */
-	DataStruct.Package clientToTGS(int clientID,String serverID, DataStruct.Ticket ticketTGS, DataStruct.Authenticator authTGS){
+	public static DataStruct.Package clientToTGS(String clientID,String serverID, DataStruct.Ticket ticketTGS, DataStruct.Authenticator authTGS){
 		DataStruct.Package p= new DataStruct.Package();
-
-		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
 		
 		p.setRequestID(serverID);
 		p.setTicket(ticketTGS);
@@ -97,8 +95,9 @@ public class Client {
 
 		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
 		tic = supplement(16, StringToBinary(tic));
+		String securityCode = DataStruct.Head.zero(128);
 		
-		DataStruct.Head h= new DataStruct.Head(TGSID,clientID1,"0","0","0","1","0","0","1","1",number,"00",tic);
+		DataStruct.Head h= new DataStruct.Head(TGSID,clientID,"0","0","0","1","0","0","1","1",number,securityCode,tic);
 		p.setHead(h);
 		return p;
 	}
@@ -109,10 +108,8 @@ public class Client {
 	 * @param authV   Server认证
 	 * @return 返回包类型
 	 */
-	DataStruct.Package clentToV(int clientID,DataStruct.Ticket ticketV, DataStruct.Authenticator authV) {
+	public static DataStruct.Package clentToV(String clientID,DataStruct.Ticket ticketV, DataStruct.Authenticator authV) {
 		DataStruct.Package p= new DataStruct.Package();
-
-		String clientID1 = supplement(4, Integer.toBinaryString(clientID));
 		
 		p.setTicket(ticketV);
 		p.setAuth(authV);
@@ -127,7 +124,8 @@ public class Client {
 		
 		String tic = Integer.toString((p.getTicket().ticketOutput().length())); //tickettgs加密后的长度
 		tic = supplement(16, StringToBinary(tic));
-		DataStruct.Head h= new DataStruct.Head(TGSID,clientID1,"0","0","0","0","0","0","1","1",number,"00",tic);
+		String securityCode = DataStruct.Head.zero(128);
+		DataStruct.Head h= new DataStruct.Head(TGSID,clientID,"0","0","0","0","0","0","1","1",number,securityCode,tic);
 		p.setHead(h);
 		
 		return p;
@@ -139,7 +137,7 @@ public class Client {
 	 * @param k Client和接收方的DES密钥
 	 * @return
 	 */
-	public DataStruct.Authenticator generateAuth(String ID,String AD,String k){
+	public static DataStruct.Authenticator generateAuth(String ID,String AD,String k){
 
 		String ts = DataStruct.Package.Create_TS();
 		DataStruct.Authenticator a= new Authenticator(ID,AD,StringToBinary(ts));
@@ -250,7 +248,7 @@ public class Client {
 	 * @param p 数据包
 	 * @return 二进制字符串
 	 */
-	static String packageToBinary(DataStruct.Package p)
+	public static String packageToBinary(DataStruct.Package p)
 	{ 
 		String s = new String();
 		String send = "";
@@ -267,7 +265,9 @@ public class Client {
 			s = StringToBinary(p.getLifeTime());
 			p.setLifeTime(s);
 		}
-		
+		//生成消息认证码
+		String sc = DataStruct.Head.MD5(p.packageOutput());
+		p.getHead().setSecurityCode(sc);
 		send = p.getHead().headOutput()+p.packageOutput();
 		p.setLifeTime(lt);
 		p.setTimeStamp(ts);
@@ -282,7 +282,7 @@ public class Client {
 	 * @throws IOException 
 	 * @throws UnknownHostException 
 	 */
-	static boolean send(Socket socket,String message) throws IOException{
+	public static boolean send(Socket socket,String message) throws IOException{
 		OutputStream os=null; 		
         try {  
         	 os = socket.getOutputStream();   
@@ -301,7 +301,7 @@ public class Client {
 	 * @param socket 传入对应的 socket 对象,
 	 * @return 返回接收到的消息
 	 */
-	static String receive(Socket socket){
+	public static String receive(Socket socket){
 	      InputStream is=null;
 	      String ssss = "";
 	        try {
@@ -314,7 +314,7 @@ public class Client {
 	                String str = new String(b,0,len);
 	                ssss+=str;
 	            }
-        		System.out.println("收到"+ssss);
+        		System.out.println("收到："+ssss);
 	        } catch (IOException e) {
 	            // TODO Auto-generated catch block
 	            e.printStackTrace();
@@ -356,7 +356,7 @@ public class Client {
 	 * @param k1 Package密钥
 	 * @return 返回对应的数据
 	 */
-	static DataStruct.Package packageAnalyse(String message,String k){
+	public static DataStruct.Package packageAnalyse(String message,String k){
 		System.out.println("-----开始解析包-----");
 		DataStruct.Package p = new DataStruct.Package();
 		int headLength = p.getHead().headOutput().length();
@@ -368,118 +368,126 @@ public class Client {
 			s[i] = String.valueOf(M[i]);
 		}
 		p.setHead(new DataStruct.Head( s[0]+s[1]+s[2]+s[3] , s[4]+s[5]+s[6]+s[7] , s[8] , s[9] , s[10] , 
-						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] ,
-						s[22]+s[23]+s[24]+s[25]+s[26]+s[27]+s[28]+s[29]+s[30]+s[31]+s[32]+s[33]+s[34]+s[35]+s[36]+s[37] ));
-			
-		System.out.println(p.getHead());
-		if(p.getHead().getExistSessionKey().equals("0") && p.getHead().getExistTS().equals("0")) {
-				System.out.println("传送");
-			for(int i = headLength;i<message.length();i++)
-			{	
+				s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] ,  "",
+				s[148]+s[149]+s[150]+s[151]+s[152]+s[153]+s[154]+s[155]+s[156]+s[157]+s[158]+s[159]+s[160]+s[161]+s[162]+s[163] ));
+		for(int n = 20 ; n < 148 ; n++) {
+			p.getHead().setSecurityCode(p.getHead().getSecurityCode()+s[n]);
+		}
+		String pack = message.replaceFirst(p.getHead().headOutput(), "");
+		//验证消息验证码
+		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {
+			if(p.getHead().getExistSessionKey().equals("0") && p.getHead().getExistTS().equals("0")) {
+					System.out.println("传送");
+				for(int i = headLength;i<message.length();i++)
+				{	
+				}
 			}
-		}
-		else if(p.getHead().getExistLifeTime().equals("1")) {
-			//说明是AS发的
-			//package解密 用client私钥
-			String m = message.replaceFirst(p.getHead().headOutput(),"");
-			RSA.rsa rsa = new RSA.rsa();	
-			message = rsa.decrypt(m, selfK);
-
-			System.out.println("密文:"+m);
-			System.out.println("明文:"+message);
-			char C[] = message.toCharArray();
-			//解包
-			int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));
-			DataStruct.Ticket ticket = new Ticket();
-			for(int i = 0;i<message.length();i++)
-			{	
-				if(i<64)
-					p.setSessionKey(p.getSessionKey()+C[i]);
-				else if(i<68)
-					p.setRequestID(p.getRequestID()+C[i]);
-				else if(i<68+56)
-					p.setTimeStamp(p.getTimeStamp()+C[i]);
-				else if(i<68+56+56)
-					p.setLifeTime(p.getLifeTime()+C[i]);
-				else if(i<68+56+56+tic+1){
-					if(i<68+56+56+64)
-						ticket.setSessionKey(ticket.getSessionKey()+C[i]);
-					else if(i<68+56+56+68)
-						ticket.setID(ticket.getID()+C[i]);
-					else if(i<68+56+56+100)
-						ticket.setIP(ticket.getIP()+C[i]);
-					else if(i<68+56+56+104)
-						ticket.setRequestID(ticket.getRequestID()+C[i]);
-					else if(i<68+56+56+104+56)
-						ticket.setTimeStamp(ticket.getTimeStamp()+C[i]);
-					else 
-						ticket.setLifeTime(ticket.getLifeTime()+C[i]);
-				}
-				else {
-						System.err.println("分析发现AS发过来的package长度有误，请检查！！");
-					       System.exit(0);
-				}
+			else if(p.getHead().getExistLifeTime().equals("1")) {
+				//说明是AS发的
+				//package解密 用client私钥
+				String m = message.replaceFirst(p.getHead().headOutput(),"");
+				RSA.rsa rsa = new RSA.rsa();	
+				message = rsa.decrypt(m, selfK);
+	
+				System.out.println("密文:"+m);
+				System.out.println("明文:"+message);
+				char C[] = message.toCharArray();
+				//解包
+				int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));
+				DataStruct.Ticket ticket = new Ticket();
+				for(int i = 0;i<message.length();i++)
+				{	
+					if(i<64)
+						p.setSessionKey(p.getSessionKey()+C[i]);
+					else if(i<68)
+						p.setRequestID(p.getRequestID()+C[i]);
+					else if(i<68+56)
+						p.setTimeStamp(p.getTimeStamp()+C[i]);
+					else if(i<68+56+56)
+						p.setLifeTime(p.getLifeTime()+C[i]);
+					else if(i<68+56+56+tic+1){
+						if(i<68+56+56+64)
+							ticket.setSessionKey(ticket.getSessionKey()+C[i]);
+						else if(i<68+56+56+68)
+							ticket.setID(ticket.getID()+C[i]);
+						else if(i<68+56+56+100)
+							ticket.setIP(ticket.getIP()+C[i]);
+						else if(i<68+56+56+104)
+							ticket.setRequestID(ticket.getRequestID()+C[i]);
+						else if(i<68+56+56+104+56)
+							ticket.setTimeStamp(ticket.getTimeStamp()+C[i]);
+						else 
+							ticket.setLifeTime(ticket.getLifeTime()+C[i]);
+					}
+					else {
+							System.err.println("分析发现AS发过来的package长度有误，请检查！！");
+						       System.exit(0);
+					}
+				}	
+	
+				String string = p.getTimeStamp();
+				p.setTimeStamp(BinaryToString(string));
+				p.setLifeTime(BinaryToString(p.getLifeTime()));
+				
+				p.setTicket(ticket);
+			}
+			else if(p.getHead().getExistTicket().equals("1")){
+				//说明是TGS发的
+				//package解密 用Ktgs，c 传参进来k
+				String m = message.replaceFirst(p.getHead().headOutput(),"");
+				message = DES.decrypt(m, k);
+				char C[] = message.toCharArray();
+				//解包
+				int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));
+				DataStruct.Ticket ticket = new Ticket();
+				for(int i = 0;i<message.length();i++)
+				{	
+					if(i<64)
+						p.setSessionKey(p.getSessionKey()+C[i]);
+					else if(i<68)
+						p.setRequestID(p.getRequestID()+C[i]);
+					else if(i<68+56)
+						p.setTimeStamp(p.getTimeStamp()+C[i]);
+					else if(i<68+56+tic+1){
+						if(i<68+56+64)
+							ticket.setSessionKey(ticket.getSessionKey()+C[i]);
+						else if(i<68+56+68)
+							ticket.setID(ticket.getID()+C[i]);
+						else if(i<68+56+100)
+							ticket.setIP(ticket.getIP()+C[i]);
+						else if(i<68+56+104)
+							ticket.setRequestID(ticket.getRequestID()+C[i]);
+						else if(i<68+56+104+56)
+							ticket.setTimeStamp(ticket.getTimeStamp()+C[i]);
+						else 
+							ticket.setLifeTime(ticket.getLifeTime()+C[i]);
+					}
+					else {
+							System.err.println("分析发现TGS发过来的package长度有误，请检查！！");
+						       System.exit(0);
+					}
+				}	
+	
+				String string = p.getTimeStamp();
+				p.setTimeStamp(BinaryToString(string));
+				p.setTicket(ticket);
+			}
+			else if(p.getHead().getExistTS().equals("1")){
+				//说明是V发的
+				//package解密 用Kv，c 传参进来k
+				String m = message.replaceFirst(p.getHead().headOutput(),"");
+				message = DES.decrypt(m, k);
+				p.setTimeStamp(BinaryToString(p.getTimeStamp()));
 			}	
-
-			String string = p.getTimeStamp();
-			p.setTimeStamp(BinaryToString(string));
-			p.setLifeTime(BinaryToString(p.getLifeTime()));
-			
-			p.setTicket(ticket);
-		}
-		else if(p.getHead().getExistTicket().equals("1")){
-			//说明是TGS发的
-			//package解密 用Ktgs，c 传参进来k
-			String m = message.replaceFirst(p.getHead().headOutput(),"");
-			message = DES.decrypt(m, k);
-			char C[] = message.toCharArray();
-			//解包
-			int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));
-			DataStruct.Ticket ticket = new Ticket();
-			for(int i = 0;i<message.length();i++)
-			{	
-				if(i<64)
-					p.setSessionKey(p.getSessionKey()+C[i]);
-				else if(i<68)
-					p.setRequestID(p.getRequestID()+C[i]);
-				else if(i<68+56)
-					p.setTimeStamp(p.getTimeStamp()+C[i]);
-				else if(i<68+56+tic+1){
-					if(i<68+56+64)
-						ticket.setSessionKey(ticket.getSessionKey()+C[i]);
-					else if(i<68+56+68)
-						ticket.setID(ticket.getID()+C[i]);
-					else if(i<68+56+100)
-						ticket.setIP(ticket.getIP()+C[i]);
-					else if(i<68+56+104)
-						ticket.setRequestID(ticket.getRequestID()+C[i]);
-					else if(i<68+56+104+56)
-						ticket.setTimeStamp(ticket.getTimeStamp()+C[i]);
-					else 
-						ticket.setLifeTime(ticket.getLifeTime()+C[i]);
-				}
-				else {
-						System.err.println("分析发现TGS发过来的package长度有误，请检查！！");
-					       System.exit(0);
-				}
-			}	
-
-			String string = p.getTimeStamp();
-			p.setTimeStamp(BinaryToString(string));
-			p.setTicket(ticket);
-		}
-		else if(p.getHead().getExistTS().equals("1")){
-			//说明是V发的
-			//package解密 用Ktgs，c 传参进来k
-			String m = message.replaceFirst(p.getHead().headOutput(),"");
-			message = DES.decrypt(m, k);
-			
-			p.setTimeStamp(BinaryToString(message));
-		}
-		//p.setTimeStamp(BinaryToString(p.getTimeStamp()));
-		System.out.println("分析的包："+ p);
-		return p ;
+			System.out.println("分析的包："+ p);
+			return p ;
+			}
+			else {
+				System.err.println("收到的包有误");
+				return null;
+			}			
 	}
+	
 	/**
 	 * 验证包
 	 * @param p 分析完的包
@@ -487,14 +495,12 @@ public class Client {
 	 */
     public static boolean verifyPackage(DataStruct.Package p,String TS){
     	//调用数据库，查看ID是否属实
-    	  if(!p.getTimeStamp().equals(DataStruct.Package.Create_lifeTime(TS, 1)))
-    	  {
-    		  System.err.println("V发过来时间不符！！！");
-    		  return false;
-    	  }
-    	
+    	if(p.getTimeStamp().equals(DataStruct.Package.Create_lifeTime(TS, 1)))
     	return true;
+    	else
+    		return false;
     }    
+	
 	public static InetAddress getIpAddress() {
 	    try {
 	      Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -520,102 +526,81 @@ public class Client {
 	  }
 
 	/**
-	 * 生成Kc
-	 * 用 clientID 和 client 的 pwd 的哈希值放入哈希函数中，生成 8 个字节的密钥
-	 * @param p
-	 * @return 以字符串形式返回密钥
-	 */
-	public String generateKeyc(DataStruct.Package p){
-		return "";
-	}
-	
-	/**
 	 * 注册
 	 * 客户在客户端设置 ID和密码
 	 * 并且将密码和公钥用AS的公钥加密
 	 * @return 加密后的包
 	 */
-	 DataStruct.Package login(){
-		 return new DataStruct.Package();
+	 public static DataStruct.Package signin(String id,String pw,String[] Pk){
+		DataStruct.Package p= new DataStruct.Package();
+		
+		//String clientID1 = supplement(4, Integer.toBinaryString(clientID));
+		
+		p.setSessionKey(Pk[0]);
+		p.setID(supplement(16,id)); 
+		p.setRequestID(StringoBinary(pw));
+//		p.setLifeTime();
+		
+		if(Number > 16)
+		{
+			Number = -1;
+		}
+		Number++;
+		String number = supplement(4, Integer.toBinaryString(Number));
+
+		String sc = DataStruct.Head.MD5(p.packageOutput());
+		p.getHead().setSecurityCode(sc);
+		String expend = Integer.toString((Pk[0].length())); //tickettgs加密后的长度
+		expend = supplement(16, StringToBinary(expend));
+		String securityCode = DataStruct.Head.MD5(p.packageOutput());
+		DataStruct.Head h= new DataStruct.Head(ASID,"0000","1","1","1","1","0","0","0","0",number,securityCode,expend);
+		p.setHead(h);
+		
+		return p;
 	}
+		/**
+		 * 登录
+		 * 客户在客户端设置 ID和密码
+		 * 并且将密码和公钥用AS的公钥加密
+		 * @return 加密后的包
+		 */
+		 public static DataStruct.Package login(String id,String pw){
+			DataStruct.Package p= new DataStruct.Package();
+	
+			p.setID(supplement(16,id)); 
+			p.setRequestID(StringoBinary(pw));
+			
+			if(Number > 16)
+			{
+				Number = -1;
+			}
+			Number++;
+			String number = supplement(4, Integer.toBinaryString(Number));
+
+			String sc = DataStruct.Head.MD5(p.packageOutput());
+			p.getHead().setSecurityCode(sc);
+
+			String securityCode = DataStruct.Head.MD5(p.packageOutput());
+			DataStruct.Head h= new DataStruct.Head(ASID,"0000","1","0","1","0","0","0","0","0",number,securityCode,"0000000000000000");
+			p.setHead(h);
+			
+			return p;
+		}
 	/**
 	 * 与Server端连接后的通信
 	 */
 	void connect()
 	{  
 	}
-	
+
 	/**
 	 * 主函数
 	 * @throws IOException 
 	 * @throws UnknownHostException 
 	 */
 	public static void main(String[] args) throws IOException {
-
-		System.out.println("--client--");
-		
-		DataStruct.Package p= new DataStruct.Package();
-		
-		int clientID = 4;
-    	String clientIP = "";
-		String TS1 = DataStruct.Package.Create_TS();
-		
-		p = clientToAS(clientID, TGSID , TS1);
-
-		System.out.println("发给AS的包"+p.toString());
-		System.out.println("-------连接AS--------");
-        System.out.println("client on");
-        
-        //发给AS
-    	Socket socket = new Socket("192.168.1.101",5555);
-    	System.out.println("发送："+packageToBinary(p));
-        String message =packageToBinary(p);
-        String s = "";
-        if(send(socket,message)) {
-        	s = receive(socket);
-        	socket.close();
-        } 
-    	DataStruct.Package p2= packageAnalyse(s, null);
-    	
-		System.out.println("-------连接TGS--------");
-    	clientIP = DataStruct.Package.ipToBinary(getIpAddress());
-
-    	Client c = new Client();
-    	p = c.clientToTGS(clientID, c.SERVERID, p2.getTicket(), c.generateAuth(p.getID(),clientIP,p2.getSessionKey()));
-    	System.out.println("发给TGS的包"+p);
-        message =packageToBinary(p);
-    	System.out.println("发送："+message);
-    	
-    	//发给TGS
-        socket = new Socket("192.168.1.106",5555);
-        if(send(socket,message)) {
-        	s = receive(socket);
-        	socket.close();
-        } 
-    	DataStruct.Package p3= packageAnalyse(s, p2.getSessionKey());
-		System.out.println("-------连接V--------");
-    	p = c.clentToV(clientID, p3.getTicket(), c.generateAuth(p3.getHead().getDestID(),clientIP,p3.getSessionKey()));
-    	String TSv = p.getTimeStamp();
-    	p.setTimeStamp("");
-    	System.out.println("发给V的包"+p);
-    	
-        message =packageToBinary(p);
-    	System.out.println("发送："+message);
-    	
-    	//发给V
-        socket = new Socket("192.168.1.104",5555);
-    	
-    	if(send(socket,message)) {
-    	s = receive(socket);
-    	socket.close();
-    	}
-    	DataStruct.Package p4= packageAnalyse(s, p3.getSessionKey());
-    	if(verifyPackage(p4, TSv)) {
-    		System.out.println("验证成功，开始与Server连接...");
-    	}
-    	else
-    		System.err.println("验证失败，请重新登录");
-    		
+		LOG log = new LOG();
+		log.setVisible(true);
 	}
 }
 

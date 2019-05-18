@@ -14,8 +14,8 @@ import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-public class Email extends JFrame{
 
+public class Send_email extends JFrame {
 	private JPanel contentPane;
 	private JTextField textField;
 	private JTextField textField_1;
@@ -28,8 +28,8 @@ public class Email extends JFrame{
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Email frame2 = new Email();
-					frame2.setVisible(true);
+					Send_email frame3 = new Send_email();
+					frame3.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -40,7 +40,7 @@ public class Email extends JFrame{
 	/**
 	 * Create the frame.
 	 */
-	public Email() {
+	public 	Send_email() {
 		setTitle("\u4EB2\u7231\u7684User");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 687, 300);
@@ -71,7 +71,7 @@ public class Email extends JFrame{
 		JButton button = new JButton("\u9000\u51FA");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				LOG_SIGN frame = new LOG_SIGN ();
+				WELCOME frame = new WELCOME();
 				frame.setVisible(true);
 				
 			}
@@ -97,5 +97,4 @@ public class Email extends JFrame{
 		textField_2.setBounds(434, 33, 221, 209);
 		contentPane.add(textField_2);
 	}
-	
 }

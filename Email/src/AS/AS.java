@@ -3,9 +3,13 @@ package AS;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.sql.SQLException;
+import java.sql.Statement;
 
+import AS.UI.AP;
 import DataStruct.Head;
 import DataStruct.Package;
 import DataStruct.Ticket;
@@ -15,7 +19,7 @@ public class AS {
 	
 	private static int Number = -1; //包的初始编号
 	private final int MAXNUMBER = 0; //包的最大编号
-	private final static String ASID = "0001"; //ASID
+	private final static String ASID = "1101"; //ASID
 	private final static String[] KEYTGS = {"865703290362069039664574527025207637385565054952203601297173618790874525723","3889"}; //TGS公钥
 	private final static String[] Kc = {"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977","3889"}; //client公钥
 	/**
@@ -36,34 +40,64 @@ public class AS {
 			s[i] = String.valueOf(M[i]);
 		}
 		p.setHead(new DataStruct.Head( s[0]+s[1]+s[2]+s[3] , s[4]+s[5]+s[6]+s[7] , s[8] , s[9] , s[10] , 
-						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] , s[20]+s[21] ,
-						s[22]+s[23]+s[24]+s[25]+s[26]+s[27]+s[28]+s[29]+s[30]+s[31]+s[32]+s[33]+s[34]+s[35]+s[36]+s[37] ));
-		
-			int count[] = {0,0,0,0,0,0,0,0};
-		for(int i = headLength;i<message.length();i++)
-		{
-			if(p.getHead().getExistSessionKey().equals("1")) {
-				System.out.println("注册");
-				count[0]++;
-				if(count[0] == 64)
-					break;
+						s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] ,  "",
+						s[148]+s[149]+s[150]+s[151]+s[152]+s[153]+s[154]+s[155]+s[156]+s[157]+s[158]+s[159]+s[160]+s[161]+s[162]+s[163] ));
+		for(int n = 20 ; n < 148 ; n++) {
+			p.getHead().setSecurityCode(p.getHead().getSecurityCode()+s[n]);
+		}
+		System.out.println(p.getHead());
+		String pack = message.replaceFirst(p.getHead().headOutput(), "");
+		//验证消息验证码
+		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {
+			if(p.getHead().getExistLogin().equals("1")) {
+				if(p.getHead().getExistSessionKey().equals("1"))
+				{
+					System.out.println("注册");
+					int len = Integer.parseInt(BinaryToString(p.getHead().getExpend()));//密钥的长度
+					for(int i = headLength;i<message.length();i++)
+					{
+						if(i<headLength+len)
+						p.setSessionKey(p.getSessionKey()+M[i]);
+						else if(i<headLength+len+16)
+						p.setID(p.getID()+M[i]);
+						else
+						p.setRequestID(p.getRequestID()+M[i]);
+					}
+				}
+				else {
+					System.out.println("登录");
+					for(int i = headLength;i<message.length();i++)
+					{
+						if(i<headLength+16)
+						p.setID(p.getID()+M[i]);
+						else
+						p.setRequestID(p.getRequestID()+M[i]);
+					}
+				}
 			}
 			else{
-				if(i<headLength+4)
-				p.setID(p.getID()+M[i]);
-				else if(i<headLength+8)
-				p.setRequestID(p.getRequestID()+M[i]);
-				else if(i<headLength+64)
-					p.setTimeStamp(p.getTimeStamp()+M[i]);
-				else {
-						System.err.println("分析发现package长度有误，请检查！！");
-					       System.exit(0);
-					}
+				for(int i = headLength;i<message.length();i++)
+				{
+					if(i<headLength+4)
+					p.setID(p.getID()+M[i]);
+					else if(i<headLength+8)
+					p.setRequestID(p.getRequestID()+M[i]);
+					else if(i<headLength+64)
+						p.setTimeStamp(p.getTimeStamp()+M[i]);
+					else {
+							System.err.println("分析发现package长度有误，请检查！！");
+						       System.exit(0);
+						}
+				}
 			}
+			p.setTimeStamp(BinaryToString(p.getTimeStamp()));
+			System.out.println("分析的包："+ p);
+			return p ;
 		}
-		p.setTimeStamp(BinaryToString(p.getTimeStamp()));
-		System.out.println("分析的包："+ p);
-		return p ;
+		else {
+			System.err.println("收到的包有误");
+			return null;
+		}
 	}
 	/**
 	 * 验证包
@@ -190,8 +224,9 @@ public class AS {
 		}
 		Number++;
 		String number = supplement(4, Integer.toBinaryString(Number));
+		String securityCode = DataStruct.Head.zero(128);
 
-		DataStruct.Head h= new DataStruct.Head(clientID,ASID,"0","1","0","1","1","1","1","0",number,"00","0000000000000000");	
+		DataStruct.Head h= new DataStruct.Head(clientID,ASID,"0","1","0","1","1","1","1","0",number,securityCode,"0000000000000000");	
 		
 		p.setHead(h);
 		
@@ -249,7 +284,6 @@ public class AS {
 				s = s + M1[i1/4]; //加入string中
 			}
 		}
-		System.out.println();
 			return s;		
 	}
 	/**
@@ -321,6 +355,10 @@ public class AS {
 		//加密 用c的publick  从数据库调用
 		String c = rsa.encrypt(p.packageOutput(), Kc);//加密后的包
 
+		//生成消息认证码
+		String sc = DataStruct.Head.MD5(c);
+		p.getHead().setSecurityCode(sc);
+		
 		send = p.getHead().headOutput()+c;
 		System.out.println("明文："+p.packageOutput());
 		System.out.println("密文："+c);
@@ -390,8 +428,72 @@ public class AS {
 	 * AS端确认是否同意注册（显示在UI上）
 	 * 同意注册则将用户ID和密码密钥放入数据库
 	 * @param p
+	 * @throws SQLException 
 	 */
-	void login(DataStruct.Package p){
+	public static String signin(DataStruct.Package p) throws SQLException{
+		DBconncet db = new DBconncet();
+		Statement stat = db.connect().createStatement();
+		String clientid = null;
+		if(!db.selectName(stat,p.getID())) {
+			db.insertData( stat,p.getID(), p.getRequestID(), p.getSessionKey());
+			int id = 0;
+			try {
+				id = db.getID(stat,p.getID());
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			clientid = supplement(4, Integer.toBinaryString(id));
+			if(clientid == null)
+			{
+				return "0";
+			}
+			else return clientid;
+		}
+		else 
+		{
+			System.err.println("该id已被注册！");
+			return "1";
+		}
+	}
+	/**
+	 * 登录
+	 * AS端确认是否同意注册（显示在UI上）
+	 * 同意注册则将用户ID和密码密钥放入数据库
+	 * @param p
+	 * @throws SQLException 
+	 */
+	public static String login(DataStruct.Package p) throws SQLException{
+		DBconncet db = new DBconncet();
+		Statement stat = db.connect().createStatement();
+		String clientid = null;
+		if(db.selectName(stat,p.getID())) {
+			if(db.log(stat,p.getID(),p.getRequestID())) {
+				int id = 0;
+				try {
+					id = db.getID(stat,p.getID());
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				clientid = supplement(4, Integer.toBinaryString(id));
+				if(clientid == null)
+				{
+					return "0";
+				}
+				else return clientid;
+			}
+			else 
+			{
+				System.err.println("密码错误");
+				return "1";
+			}
+		}
+		else 
+		{
+			System.err.println("账号不存在！");
+			return "1";
+		}
 	}
 	/**
 	 * 主函数
@@ -399,7 +501,10 @@ public class AS {
 	public static void main(String[] args) throws Exception {
 
 		 System.out.println("-------AS打开----------");
-		int port=5555;
-		new Thread(Receiver.listener(port)).start();
+		 AP ui = new AP();
+		 ui.setVisible(true);
+		 int port=5555;
+		 Receiver r = new Receiver(ui);
+		 new Thread(r.listener(port)).start();
 	}
 }

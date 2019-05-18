@@ -24,7 +24,7 @@ public class keymanger {
 		 BigInteger bi;
 
 	      // create and assign value to bitLength
-	      int bitLength = 300;
+	      int bitLength = 125;
 
 	      // create a random object
 	      Random rnd = new Random();
@@ -33,10 +33,6 @@ public class keymanger {
 	      // static method is called using class name
 	      bi = BigInteger.probablePrime(bitLength, rnd);
 
-	      String str = "bi " +  " is " +bi;
-
-	      // print bi value
-	      System.out.println( str );
 		return bi;
 	}
     
