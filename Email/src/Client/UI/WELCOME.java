@@ -206,6 +206,7 @@ public class WELCOME extends JFrame {
 				        } 
 				        DataStruct.Package p3= Client.packageAnalyse(rmessage, p2.getSessionKey());
 
+						message1.setText(message1.getText()+"\r\n收到TGS的包：\r\n"+p2.toString());
 						message1.setText(message1.getText()+"\r\n\r\n-------连接V--------");
 						System.out.println("-------连接V--------");
 				    	p = Client.clentToV(clientID, p3.getTicket(), Client.generateAuth(p3.getHead().getDestID(),clientIP,p3.getSessionKey()));
@@ -225,6 +226,7 @@ public class WELCOME extends JFrame {
 				    	socket.close();
 				    	}
 				    	DataStruct.Package p4= Client.packageAnalyse(rmessage, p3.getSessionKey());
+						message1.setText(message1.getText()+"\r\n收到V的包：\r\n"+p2.toString());
 				    	if(Client.verifyPackage(p4, TSv)) {
 							message1.setText(message1.getText()+"\r\nkerberos认证成功，进入Email！");
 				    		System.out.println("kerberos认证成功，进入Email！");
@@ -266,7 +268,7 @@ public class WELCOME extends JFrame {
 		
 		JLabel lblwelcome = new JLabel("*********  Welcome  *********");
 		lblwelcome.setFont(new Font("仿宋", Font.PLAIN, 18));
-		lblwelcome.setBounds(62, 17, 272, 37);
+		lblwelcome.setBounds(62, 17, 272, 40);
 		contentPane.add(lblwelcome);
 	}
 	

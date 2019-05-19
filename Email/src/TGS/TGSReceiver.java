@@ -33,19 +33,24 @@ public class TGSReceiver extends Thread{
 					}
 		        	//拆包调用
 		        	TGS tgs = new TGS();
-		        	ui.setText_receive("reciever："+rmessage);
+		        	ui.setText_receive("-------收到包-------");
 		        	ui.setText_receive("socket："+s);
-		        	ui.setText_receive("-------开始处理包-------");
-		        	System.out.println("-------开始处理包-------");
+		        	ui.setText_receive("reciever："+rmessage);
+		        	ui.setText_receive("-------开始分析包-------");
+		        	System.out.println("-------开始分析包-------");
 		        	DataStruct.Package p = tgs.packAnalyse(rmessage);
 		        	ui.setText_receive("receivePackge："+p.toString());
+			        ui.setText_receive("-------分析完成-------     -----"+s.getInetAddress()+"-----");
 		        	if(p.packageOutput().equals("")) {
 		        		ui.setText_receive("-------client发送的包有误，请重新发送！-------");
 		        		System.err.println("client发送的包有误，请重新发送！！");
 		        	}
 		        	if(tgs.checkIdentity(p)) {
+			        	ui.setText_receive("-------认证成功-------     -----"+s.getInetAddress()+"-----");
+			        	ui.setText_send("-------认证成功-------     -----"+s.getInetAddress()+"-----");
 		        		DataStruct.Ticket TicketTgs = tgs.generateTicketV(p,s.getInetAddress());
 		        		DataStruct.Package p2 = tgs.packData(p.getHead().getSourceID(),p.getRequestID(),TicketTgs);
+		        		ui.setText_send("socket："+s);
 		            	ui.setText_send("sendPacksge："+p);
 		        		smessage = tgs.packageToBiarny(p2,p.getTicket().getSessionKey());//打包并发送
 		        	}
@@ -53,16 +58,14 @@ public class TGSReceiver extends Thread{
 		        		System.err.println("client发送的包有误，请查看！！");
 		        		//System.exit(0);
 		        	}
-
-		        	ui.setText_send("socket："+s);
-		        	ui.setText_send("-------开始发送-------");
+		        	ui.setText_send("-------开始发送-------     -----"+s.getInetAddress()+"-----");
 		        	ui.setText_send("send："+smessage);
 		        	System.out.println("对应得socket"+s);
 		        	System.out.println("------开始发送--------");
 		        	System.out.println("发送给Client的包："+smessage);
 		        	try {
 						TGS.send(s,smessage);
-				        ui.setText_send("-------发送完成-------");
+				        ui.setText_send("-------发送完成-------     -----"+s.getInetAddress()+"-----");
 				        System.out.println("-------发送完成-------");
 					} catch (IOException e) {
 						// TODO Auto-generated catch block

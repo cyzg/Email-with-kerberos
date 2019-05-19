@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
@@ -14,6 +15,7 @@ import Client.UI.WELCOME;
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
 import Des.DES;
+import Server.V;
 
 public class Client {
 	
@@ -22,6 +24,7 @@ public class Client {
 	private final static String ASID = "1101"; //ASID
 	public final static String TGSID = "1110"; 
 	public final static String SERVERID = "1111"; 
+	private final static String[] Kc = {"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977","3889"}; //client公钥
 	private final static String[] selfK ={"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977" , "1152163794881094595676879571359995304125912323044089952277703799112846640042039256420690483427161040887459792478554485040196767218736825329254102072887596847184101841933983341452289"}; //client私钥
 	public static String ASIP = "192.168.1.104";
 	public static String TGSIP = "192.168.1.100";
@@ -187,6 +190,31 @@ public class Client {
 		}
  		return s;	
 	}
+	
+	public static String BinaryoString(String string) {
+		// TODO Auto-generated method stub
+		int length = string.length();
+		if(length%8 != 0) {
+			System.err.println("Client二进制转十进制时，二进制长度有误");
+		}
+		char C[] = string.toCharArray();
+		String M[] = new String[length/8];
+		for(int i=0;i<M.length;i++){
+			M[i] = "";
+		}
+		//System.out.println(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+		int M1[] = new int[length/8];
+		String s ="";  //进行二进制的累加
+		for(int i1=0;i1<length;i1++)
+		{
+			M[i1/8] = M[i1/8]+C[i1];
+			if(i1%8 == 7) {
+				M1[i1/8] = Integer.parseInt(M[i1/8],2);
+				s = s + (char)M1[i1/8]; //加入string中
+			}
+		}
+			return s;
+	}
     /*
 	 * 将string字符串编程ascii码二进制编码的string字符串(数字转)
 	 */
@@ -270,6 +298,34 @@ public class Client {
 		p.getHead().setSecurityCode(sc);
 		send = p.getHead().headOutput()+p.packageOutput();
 		p.setLifeTime(lt);
+		p.setTimeStamp(ts);
+		return send;
+	}
+	public static String appackageToBinary(DataStruct.APPPackage p)
+	{ 
+		String s = new String();
+		String send = "";
+		String ts = p.getTimeStamp();
+
+		if(p.getHead().getExistTS().equals("1")) {
+			s = StringToBinary(p.getTimeStamp());
+			System.out.println("二进制tp"+s);
+			p.setTimeStamp(s);
+			p.getAuth().setTimeStamp(s);
+			p.getEmail().setTimeStamp(s);
+			
+		}
+		//加密auth
+		RSA.rsa rsa= new RSA.rsa();
+		String au=rsa.encrypt(p.getAuth().APPAuthOutput(), Kc);
+		String auth = Integer.toString((au.length())); //auth加密后的长度
+		auth = supplement(16, StringToBinary(auth));
+		p.getHead().setExpend(auth);
+		//生成消息认证码
+		String m =p.getsendID()+p.getreceiveID()+p.getTimeStamp()+au+p.getEmail().EmailOutput();
+		String sc = DataStruct.Head.MD5(m);
+		p.getHead().setSecurityCode(sc);
+		send = p.getHead().headOutput()+m;
 		p.setTimeStamp(ts);
 		return send;
 	}
@@ -375,14 +431,8 @@ public class Client {
 		}
 		String pack = message.replaceFirst(p.getHead().headOutput(), "");
 		//验证消息验证码
-		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {
-			if(p.getHead().getExistSessionKey().equals("0") && p.getHead().getExistTS().equals("0")) {
-					System.out.println("传送");
-				for(int i = headLength;i<message.length();i++)
-				{	
-				}
-			}
-			else if(p.getHead().getExistLifeTime().equals("1")) {
+		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {	
+			 if(p.getHead().getExistLifeTime().equals("1")) {
 				//说明是AS发的
 				//package解密 用client私钥
 				String m = message.replaceFirst(p.getHead().headOutput(),"");
@@ -487,20 +537,104 @@ public class Client {
 				return null;
 			}			
 	}
-	
+	public static DataStruct.APPPackage apppackageAnalyse(String message){
+		System.out.println("收到："+message);
+		DataStruct.APPPackage p=new DataStruct.APPPackage();
+		System.out.println("-----开始解析包-----");
+		int headLength = p.getHead().headOutput().length();
+		char M[] = message.toCharArray();
+		String s[] = new String[headLength];
+		for(int i = 0;i<(headLength);i++)
+		{
+			s[i] = String.valueOf(M[i]);
+		}
+		p.setHead(new DataStruct.Head( s[0]+s[1]+s[2]+s[3] , s[4]+s[5]+s[6]+s[7] , s[8] , s[9] , s[10] , 
+				s[11] , s[12] , s[13] , s[14], s[15], s[16]+s[17]+s[18]+s[19] ,  "",
+				s[148]+s[149]+s[150]+s[151]+s[152]+s[153]+s[154]+s[155]+s[156]+s[157]+s[158]+s[159]+s[160]+s[161]+s[162]+s[163] ));
+		for(int n = 20 ; n < 148 ; n++) {
+			p.getHead().setSecurityCode(p.getHead().getSecurityCode()+s[n]);
+		}
+		System.out.println(p.getHead());
+		String pack = message.replaceFirst(p.getHead().headOutput(), "");
+		
+		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {
+				//消息验证码
+			if(p.getHead().getExistSessionKey().equals("1")){
+				//应用传送包
+				String stringid[] = new String[64];
+				for(int i = 0;i< 64 ;i++) {
+					stringid[i] = String.valueOf(M[headLength+i]);
+				}
+				p.setsendID(stringid[0]+stringid[1]+stringid[2]+stringid[3]);
+				p.setreceiveID(stringid[4]+stringid[5]+stringid[6]+stringid[7]);
+				String ts ="";
+				for(int n = 8 ; n < 64 ; n++) {
+					ts+=stringid[n];
+				}
+				int au = Integer.parseInt(BinaryToString(p.getHead().getExpend()));//au长度
+				System.out.println();
+				String auth= message.substring(228, 228+au);
+				System.out.println(auth);
+				System.out.println(ts);
+				RSA.rsa rsa=new RSA.rsa();
+				String deauth=rsa.decrypt(auth, selfK);//解密后的AUTH
+				p.setTimeStamp(BinaryToString(ts));
+				p.getAuth().setsessionkey(deauth.substring(0, 64));
+				p.getAuth().setsendID(deauth.substring(64, 68));
+				p.getAuth().setreceiveID(deauth.substring(68, 72));
+				p.getAuth().setTimeStamp(BinaryToString(deauth.substring(72,128)));
+				
+				//Email 拆
+				String ms="";
+				for(int n = 228+au ; n < 228+au+56 ; n++) {
+					ms+=String.valueOf(M[n]);
+				}
+				p.getEmail().setTimeStamp(BinaryToString(ms));
+				System.out.println("时间戳"+p.getEmail().getTimeStamp());
+				String em=message.substring(228+56+au);//content密文
+				System.out.println("em"+em);
+				
+				//p.getEmail().setcontent(BinaryToString(DES.decrypt(em, p.getAuth().getsessionkey())));
+				String c = DES.decrypt(em, p.getAuth().getsessionkey());
+				p.getEmail().setcontent(BinaryoString(c));
+			}
+			else if(p.getHead().getExistTS().equals("1")){
+				//收到
+				String m = message.replaceFirst(p.getHead().headOutput(),"");
+				p.setTimeStamp(BinaryToString(m));
+			}
+			System.out.println("解析的包"+p);
+			return p;
+		}
+		else {
+			System.err.println("收到的包有误");
+			return null;
+		}	
+	}
 	/**
 	 * 验证包
 	 * @param p 分析完的包
 	 * @return 包是正确的返回true
 	 */
     public static boolean verifyPackage(DataStruct.Package p,String TS){
-    	//调用数据库，查看ID是否属实
+    	//查看v发的包
     	if(p.getTimeStamp().equals(DataStruct.Package.Create_lifeTime(TS, 1)))
     	return true;
     	else
     		return false;
     }    
-	
+	/**
+	 * 验证包
+	 * @param p 分析完的包
+	 * @return 包是正确的返回true
+	 */
+    public static boolean verifyPackage(DataStruct.APPPackage p,String TS){
+    	//查看v发的包
+    	if(p.getTimeStamp().equals(DataStruct.Package.Create_lifeTime(TS, 1)))
+    	return true;
+    	else
+    		return false;
+    }  
 	public static InetAddress getIpAddress() {
 	    try {
 	      Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -586,21 +720,128 @@ public class Client {
 			
 			return p;
 		}
+			public static String generateKeyCC(){
+				String skey = new String();
+			    for(int i= 0 ;i < 64;i++)
+			    {
+			    	int x = (int)(Math.random()*2);
+			    	if(x == 2) {
+			    		x = (int)(Math.random()*2);
+			    	}
+			    	skey = skey + Integer.toBinaryString(x);  
+			    }
+				return skey;
+			}
 	/**
 	 * 与Server端连接后的通信
 	 */
-	void connect()
-	{  
-	}
-
+		public static DataStruct.APPPackage connect(String sendID,String receiveID,String content)
+		{  		
+			DataStruct.APPPackage p= new DataStruct.APPPackage();
+			DataStruct.APPAuthenticator a=new DataStruct.APPAuthenticator();
+			DataStruct.Email e=new DataStruct.Email();
+			String TS=DataStruct.Package.Create_TS();
+			String sessionkey=generateKeyCC();
+	
+			System.out.println("test:"+content);
+			System.out.println("test:"+StringoBinary(content));
+			String content1= DES.encrypt(StringoBinary(content), sessionkey);
+			//String content1= DES.encrypt(StringToBinary(content), sessionkey);
+			a.setsendID(sendID); 
+			a.setreceiveID(receiveID);	
+			a.setTimeStamp(TS);
+			a.setsessionkey(sessionkey);
+			e.setTimeStamp(TS);
+			e.setcontent(content1);
+			p.setsendID(sendID); 
+			p.setreceiveID(receiveID);
+			p.setTimeStamp(TS);
+			p.setAuth(a);
+			p.setEmail(e);
+			if(Number > 16)
+			{
+				Number = -1;
+			}
+			Number++;
+			String number = supplement(4, Integer.toBinaryString(Number));
+			String securityCode = DataStruct.Head.zero(128);
+			DataStruct.Head h= new DataStruct.Head(sendID,receiveID,"0","1","1","1","1","0","0","1",number,securityCode,"0000000000000000");
+			p.setHead(h);
+			System.out.println(p.packageOutput());
+			return p;
+		}
+		
+		/**
+		 * 
+		 * @param clientID
+		 * @param TS
+		 * @param k
+		 * @return
+		 */
+		public static String requestEmail(String clientID){
+			DataStruct.Package p = new DataStruct.Package();;
+			
+			p.setTimeStamp(DataStruct.Package.Create_TS());
+			
+			if(Number > 16)
+			{
+				Number = -1;
+			}
+			Number++;
+			String number = supplement(4, Integer.toBinaryString(Number));
+			String securityCode = DataStruct.Head.zero(128);
+			
+			DataStruct.Head h= new DataStruct.Head(SERVERID,clientID,"0","0","0","0","1","0","0","0",number,securityCode,"0000000000000000");
+			p.setHead(h);
+			
+			p.setTimeStamp(StringToBinary(p.getTimeStamp()));
+			
+			String send = p.packageOutput();
+			
+			//生成消息认证码
+			String sc = DataStruct.Head.MD5(send);
+			p.getHead().setSecurityCode(sc);
+			
+			return p.getHead().headOutput()+send;
+		}
+		
 	/**
 	 * 主函数
 	 * @throws IOException 
+	 * @throws InterruptedException 
 	 * @throws UnknownHostException 
 	 */
-	public static void main(String[] args) throws IOException {
-		WELCOME frame = new WELCOME();
-		frame.setVisible(true);
+	public static void main(String[] args) throws IOException, InterruptedException {
+		Socket socket=new Socket("192.168.1.104",5555);
+		DataStruct.APPPackage psend= connect("0001","0010","hello");
+		String message =appackageToBinary(psend);
+		String rmessage = "";
+    	if(Client.send(socket,message)) {
+    		rmessage = Client.receive(socket);
+    		socket.close();
+    	}
+		System.out.println("发送："+message);
+		//String s1 =appackageToBinary(connect(0003,0004,"654321"));
+		DataStruct.APPPackage p = Client.apppackageAnalyse(rmessage);
+		if(verifyPackage(p, psend.getTimeStamp())) {
+			System.out.println("发送成功！");
+		}
+		else {
+			System.out.println("发送失败！");
+		}
+		socket=new Socket("192.168.1.104",5555);
+		String sss = requestEmail("0010");	
+		
+		if(send(socket,sss)) {//发送一条请求 请求接收历史邮件
+    		new Thread(CReceiver.listener(6666)).start();	//收历史邮件
+    	} 
+		
+    	//System.out.println("邮件发信人："+p.getAuth().getsendID());	
+    	//System.out.println("邮件内容："+p.getEmail().getcontent());
+			
+		//new Thread(CReceiver.listener(5666)).start();
+		/*WELCOME frame = new WELCOME();
+		frame.setVisible(true);*/
 	}
 }
 

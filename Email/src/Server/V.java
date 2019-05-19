@@ -3,7 +3,11 @@ package Server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
@@ -23,7 +27,7 @@ public class V {
 	 * @param message
 	 * @return 返回分析完成的package
 	 */
-	public DataStruct.Package packAnalyse(String message){
+	public static DataStruct.Package packAnalyse(String message){
 		System.out.println("-----开始解析包-----");
 		DataStruct.Package p = new DataStruct.Package();
 		DataStruct.Ticket ticket = new Ticket();
@@ -48,8 +52,19 @@ public class V {
 		
 		//验证消息验证码
 		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {
-	
-			System.out.println(p.getHead());
+			if(p.getHead().getExistTS().equals("1") &&p.getHead().getExistRequstID().equals("0"))
+			{//c请求查看历史邮件
+				//appsend(p.getID())
+				p.setID(p.getHead().getSourceID());
+				System.out.println("c请求查看历史邮件");
+			}
+			else if(p.getHead().getExistSessionKey().equals("1"))
+			{
+				p.setSessionKey(message.replaceFirst(p.getHead().headOutput(), ""));
+				//把头外的数据放入sessionkey
+			}
+			else {
+			
 			//分离出包内容和Ticket和Auth
 			String messageT = "" , messageA = "";
 			int tic = Integer.parseInt(BinaryToString(p.getHead().getExpend()));//加密后tic的长度
@@ -111,7 +126,7 @@ public class V {
 			auth.setTimeStamp(BinaryToString(auth.getTimeStamp()));
 			p.setTicket(ticket);
 			p.setAuth(auth);
-			
+			}
 			System.out.println("分析的包："+ p);
 			return p ;
 		}
@@ -262,6 +277,39 @@ public class V {
 		return p.getHead().headOutput()+send;
 	}
 	/**
+	 * 
+	 * @param clientID
+	 * @param TS
+	 * @param k
+	 * @return
+	 */
+	public String requestEmail(String clientID,String TS){
+		DataStruct.Package p = new DataStruct.Package();;
+		
+		p.setTimeStamp(DataStruct.Package.Create_lifeTime(TS, 1));
+		
+		if(Number > 16)
+		{
+			Number = -1;
+		}
+		Number++;
+		String number = supplement(4, Integer.toBinaryString(Number));
+		String securityCode = DataStruct.Head.zero(128);
+		
+		DataStruct.Head h= new DataStruct.Head(clientID,SERVERID,"0","0","0","0","1","0","0","0",number,securityCode,"0000000000000000");
+		p.setHead(h);
+		
+		p.setTimeStamp(StringToBinary(p.getTimeStamp()));
+		
+		String send = p.packageOutput();
+		
+		//生成消息认证码
+		String sc = DataStruct.Head.MD5(send);
+		p.getHead().setSecurityCode(sc);
+		
+		return p.getHead().headOutput()+send;
+	}
+	/**
 	 * 发送消息
 	 * 用 socket 输出流进行发送
 	 * @param socket 套接字，对应的 socket 对象
@@ -313,10 +361,71 @@ public class V {
 		  	System.out.println("收到的包："+ssss);
 	            return ssss;
 	} 
+	
+	public DataStruct.APPPackage apppackAnalylse(DataStruct.Package p) {
+	// TODO Auto-generated method stub
+		
+		String message="";
+		DataStruct.APPPackage ap =new DataStruct.APPPackage();
+		ap.setHead(p.getHead());
+		String m =p.getSessionKey();
+		System.out.println("-----开始解析包-----");
+		
+		//验证消息验证码
+		if(DataStruct.Head.MD5(m).equals(p.getHead().getSecurityCode())) {
+			ap.setsendID(m.substring(0, 4));
+			ap.setreceiveID(m.substring(4, 8));
+			ap.setTimeStamp(BinaryToString(m.substring(8, 64)));
+			 message =m.substring(64);
+		}
+		ap.getEmail().setcontent(message);;
+		return ap;
+	}
 	/**
-	 * 与Client端连接后的通信
+	 * 与Server端连接后的通信
 	 */
-	public void connect() {
+		static DataStruct.APPPackage connect(String sendid,String message[])
+		{  		
+			DataStruct.APPPackage p= new DataStruct.APPPackage();
+			p.setsendID(sendid); 
+			p.setreceiveID(message[0]);
+			p.setTimeStamp(StringToBinary(DataStruct.Package.Create_TS()));
+			p.getAuth().setsessionkey(message[1]);
+			if(Number > 16)
+			{
+				Number = -1;
+			}
+			Number++;
+			String number = supplement(4, Integer.toBinaryString(Number));
+			String securityCode = DataStruct.Head.MD5(p.packageOutput());
+			DataStruct.Head h= new DataStruct.Head(sendid,message[0],"0","1","1","1","1","0","0","1",number,securityCode,message[2]);//count转为二进制
+			p.setHead(h);
+			return p;
+		}
+	public void appsend(String id,String IP, int port) throws SQLException, UnknownHostException, IOException {
+		// TODO Auto-generated method stub
+		Socket socket=null;
+		DBconncet db = new DBconncet();
+		Statement stat = DBconncet.connect().createStatement();
+		int count = db.selectID(stat, id);
+		System.out.println(count);
+		String message[][] =db.getData(stat, id, count);//数据库中存的
+		//String send ="";
+		for(int i = 0;i < count;i++){//数据库里有该客户端历史邮件
+			DataStruct.APPPackage ap = connect(id,message[i]);//
+			//id 在数据库里根据id查发送id 查密文message
+			String send=ap.getHead().headOutput()+ap.getAuth().getsessionkey();
+			System.out.println(send);
+			socket=new Socket(IP,6666);
+			try {
+				send(socket,send);
+			} catch (IOException e) {
+				socket.isClosed();
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException{

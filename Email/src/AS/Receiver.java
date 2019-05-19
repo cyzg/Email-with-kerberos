@@ -32,12 +32,14 @@ public class Receiver extends Thread{
 				e.printStackTrace();
 			}
         	//拆包调用
-        	ui.setText_receive("reciever："+rmessage);
+        	ui.setText_receive("-------收到包-------");
         	ui.setText_receive("socket："+s);
-        	ui.setText_receive("-------开始处理包-------");
+        	ui.setText_receive("reciever："+rmessage);
+        	ui.setText_receive("-------开始分析包-------");
         	DataStruct.Package p = AS.packAnalyse(rmessage);
         	ui.setText_receive("receivePackge："+p.toString());
-        	System.out.println("-------处理完成-------");
+	        ui.setText_receive("-------分析完成-------     -----"+s.getInetAddress()+"-----");
+        	System.out.println("-------"+s.getInetAddress()+" 分析完成-------");
         	
         	if(p.packageOutput().equals("")) {
         		ui.setText_receive("-------client发送的包有误，请重新发送！-------");
@@ -46,7 +48,8 @@ public class Receiver extends Thread{
         	if(p.getHead().getExistLogin().equals("1")) {
 				if(p.getHead().getExistSessionKey().equals("1"))//注册
 				{
-		        	ui.setText_send("-------注册-------");
+			        ui.setText_receive("-------注册-------     -----"+s.getInetAddress()+"-----");
+		        	ui.setText_send("-------注册-------     -----"+s.getInetAddress()+"-----");
 	        		try {
 						smessage = AS.signin(p);
 					} catch (SQLException e) {
@@ -55,7 +58,8 @@ public class Receiver extends Thread{
 					};
 				}
 				else {//登录
-		        	ui.setText_send("-------登录-------");
+			        ui.setText_receive("-------登录-------     -----"+s.getInetAddress()+"-----");
+		        	ui.setText_send("-------登录-------     -----"+s.getInetAddress()+"-----");
 	        		try {
 						smessage = AS.login(p);
 					} catch (SQLException e) {
@@ -65,8 +69,11 @@ public class Receiver extends Thread{
 				}
         	}
         	else if(AS.verifyPackage(p)) {
+	        	ui.setText_receive("-------认证成功-------     -----"+s.getInetAddress()+"-----");
+	        	ui.setText_send("-------认证成功-------     -----"+s.getInetAddress()+"-----");
         		DataStruct.Ticket TicketTgs = AS.generateTicketTGS(p,s.getInetAddress());
         		p = AS.packData(p.getHead().getSourceID(),p.getRequestID(),TicketTgs);
+        		ui.setText_send("socket："+s);
             	ui.setText_send("sendPacksge："+p);
         		smessage = AS.packageToBinary(p);//打包并发送
         	}
@@ -74,10 +81,8 @@ public class Receiver extends Thread{
         		System.err.println("client发送的包有误，请查看！！");
         		//System.exit(0);
         	}
-        	ui.setText_send("socket："+s);
-
         	System.out.println("对应得socket"+s);
-        	ui.setText_send("-------开始发送-------");
+        	ui.setText_send("-------开始发送-------     -----"+s.getInetAddress()+"-----");
         	System.out.println("------开始发送--------");
         	ui.setText_send("send："+smessage);
         	System.out.println("发送给Client的包："+smessage);
@@ -85,7 +90,7 @@ public class Receiver extends Thread{
         	try {
 				AS.send(s,smessage);
 
-	        ui.setText_send("-------发送完成-------");
+	        ui.setText_send("-------发送完成-------     -----"+s.getInetAddress()+"-----");
         	System.out.println("-------发送完成-------");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
