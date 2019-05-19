@@ -26,9 +26,9 @@ public class Client {
 	public final static String SERVERID = "1111"; 
 	private final static String[] Kc = {"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977","3889"}; //client公钥
 	private final static String[] selfK ={"3096589494327972966542767555645488415857410521298179560751893624567975523927775168085739664949238616280271893353946263715523651672294362843822766996968340714023382235747900221065977" , "1152163794881094595676879571359995304125912323044089952277703799112846640042039256420690483427161040887459792478554485040196767218736825329254102072887596847184101841933983341452289"}; //client私钥
-	public static String ASIP = "192.168.1.104";
-	public static String TGSIP = "192.168.1.100";
-	public static String SERVERIP = "192.168.1.110";
+	public static String ASIP = "192.168.43.115";
+	public static String TGSIP = "192.168.43.37";
+	public static String SERVERIP = "192.168.43.252";
 	/**
 	 * 把str补齐到n位，高位写0
 	 * @param n 
@@ -812,36 +812,9 @@ public class Client {
 	 * @throws UnknownHostException 
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
-		Socket socket=new Socket("192.168.1.104",5555);
-		DataStruct.APPPackage psend= connect("0001","0010","hello");
-		String message =appackageToBinary(psend);
-		String rmessage = "";
-    	if(Client.send(socket,message)) {
-    		rmessage = Client.receive(socket);
-    		socket.close();
-    	}
-		System.out.println("发送："+message);
-		//String s1 =appackageToBinary(connect(0003,0004,"654321"));
-		DataStruct.APPPackage p = Client.apppackageAnalyse(rmessage);
-		if(verifyPackage(p, psend.getTimeStamp())) {
-			System.out.println("发送成功！");
-		}
-		else {
-			System.out.println("发送失败！");
-		}
-		socket=new Socket("192.168.1.104",5555);
-		String sss = requestEmail("0010");	
-		
-		if(send(socket,sss)) {//发送一条请求 请求接收历史邮件
-    		new Thread(CReceiver.listener(6666)).start();	//收历史邮件
-    	} 
-		
-    	//System.out.println("邮件发信人："+p.getAuth().getsendID());	
-    	//System.out.println("邮件内容："+p.getEmail().getcontent());
-			
-		//new Thread(CReceiver.listener(5666)).start();
-		/*WELCOME frame = new WELCOME();
-		frame.setVisible(true);*/
+
+		WELCOME frame = new WELCOME();
+		frame.setVisible(true);
 	}
 }
 

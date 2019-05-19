@@ -36,7 +36,6 @@ public class DBconncet {
 		        String url = "jdbc:mysql:///email?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC";   
 		        conn = DriverManager.getConnection(url, "root", "123456");
 		        stat = conn.createStatement();
-		        stat.executeUpdate("drop table if exists `server`");
 		        //´´½¨±íuser
 		        stat.executeUpdate("create table if not exists `server`"
 		        		+ "(`num` int NOT NULL AUTO_INCREMENT,"

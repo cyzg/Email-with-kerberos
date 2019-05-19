@@ -390,7 +390,8 @@ public class V {
 			p.setsendID(sendid); 
 			p.setreceiveID(message[0]);
 			p.setTimeStamp(StringToBinary(DataStruct.Package.Create_TS()));
-			p.getAuth().setsessionkey(message[1]);
+			System.out.println(DataStruct.Package.Create_TS());
+			p.getAuth().setsessionkey(message[2]);
 			if(Number > 16)
 			{
 				Number = -1;
@@ -398,8 +399,9 @@ public class V {
 			Number++;
 			String number = supplement(4, Integer.toBinaryString(Number));
 			String securityCode = DataStruct.Head.MD5(p.packageOutput());
-			DataStruct.Head h= new DataStruct.Head(sendid,message[0],"0","1","1","1","1","0","0","1",number,securityCode,message[2]);//count转为二进制
+			DataStruct.Head h= new DataStruct.Head(sendid,message[0],"0","1","1","1","1","0","0","1",number,securityCode,message[1]);//count转为二进制
 			p.setHead(h);
+			System.out.println(p);
 			return p;
 		}
 	public void appsend(String id,String IP, int port) throws SQLException, UnknownHostException, IOException {
@@ -414,8 +416,8 @@ public class V {
 		for(int i = 0;i < count;i++){//数据库里有该客户端历史邮件
 			DataStruct.APPPackage ap = connect(id,message[i]);//
 			//id 在数据库里根据id查发送id 查密文message
-			String send=ap.getHead().headOutput()+ap.getAuth().getsessionkey();
-			System.out.println(send);
+			String send = ap.getHead().headOutput()+ap.packageOutput();
+			System.out.println("send:"+send);
 			socket=new Socket(IP,6666);
 			try {
 				send(socket,send);
