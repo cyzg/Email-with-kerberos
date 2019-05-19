@@ -5,7 +5,9 @@ import java.awt.Font;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -39,6 +41,14 @@ public class receive_email extends JFrame{
 		});
 	}
 
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
 	public receive_email(String id) throws HeadlessException {
 		this.id = id;
 	}
@@ -70,18 +80,46 @@ public class receive_email extends JFrame{
 		textArea_rece_email.setLineWrap(true);
 		scrollPane.setViewportView(textArea_rece_email);
 		
-//		JButton button_send_email = new JButton("\u53D1\u90AE\u4EF6");
-//		button_send_email.addActionListener(new ActionListener() {                                                       //发邮件按钮    
-//			public void actionPerformed(ActionEvent e) {
-//				Send_email send_email = new Send_email();
-//				send_email.setVisible(true);
-//			}
-//		});
-//		
-//		
-//		button_send_email.setFont(new Font("仿宋", Font.PLAIN, 18));
-//		button_send_email.setBounds(384, 73, 90, 36);
-//		contentPane.add(button_send_email);
+		JButton button_send_email = new JButton("刷新");
+		button_send_email.addActionListener(new ActionListener() {                                                       //发邮件按钮    
+			public void actionPerformed(ActionEvent e) {receive_email email = new receive_email();
+			email.setVisible(true);
+			email.setId(id);
+			String message = Client.requestEmail(id);
+			String rmessage = "";
+			Socket socket;
+			try {
+				socket = new Socket(Client.SERVERIP,5555);
+				boolean send = Client.send(socket,message);
+				if(send) {//发送一条请求 请求接收历史邮件
+		        	rmessage = Client.receive(socket);
+		        	int num = Integer.parseInt(Client.BinaryToString(rmessage));
+					try {
+						System.out.println(id);
+						new Thread(CReceiver.listener(6666,email,num)).start();
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}	//收历史邮件
+					socket.close();
+				}
+				else {
+					socket.close();
+				}
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			}
+		});
+		
+		
+		button_send_email.setFont(new Font("仿宋", Font.PLAIN, 18));
+		button_send_email.setBounds(384, 73, 90, 36);
+		contentPane.add(button_send_email);
 		
 		JButton button_refresh = new JButton("返回");
 		button_refresh.setFont(new Font("仿宋", Font.PLAIN, 18));
@@ -90,11 +128,18 @@ public class receive_email extends JFrame{
 		button_refresh.addActionListener(new ActionListener() {                                                      //刷新按钮
 			public void actionPerformed(ActionEvent e) {
 				dispose();
-				WELCOME frame = new WELCOME();
-				frame.setVisible(true);
 			}
 		});;
 	}
+	
+	public JTextArea getTextArea_rece_email() {
+		return textArea_rece_email;
+	}
+
+	public void setTextArea_rece_email(JTextArea textArea_rece_email) {
+		this.textArea_rece_email = textArea_rece_email;
+	}
+
 	public void getEmail(String s) {
 		if(!textArea_rece_email.getText().equals(""))
 		this.textArea_rece_email.setText(textArea_rece_email.getText()+"\r\n"+s); 

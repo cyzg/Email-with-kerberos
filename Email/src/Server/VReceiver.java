@@ -57,7 +57,7 @@ public class VReceiver extends Thread{
         			int port=s.getPort();
 					//Socket sssss = new Socket(s.getInetAddress().toString().replaceFirst("/", ""),6666);
 					try {
-						v.appsend(p.getID(),IP,port);
+						v.appsend(p.getID(),IP,port,s);
 					} catch (UnknownHostException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -105,7 +105,15 @@ public class VReceiver extends Thread{
         	else if(v.checkIdentity(p)) {
 	        	ui.setText_receive("-------认证成功-------     -----"+s.getInetAddress()+"-----");
 	        	ui.setText_send("-------认证成功-------     -----"+s.getInetAddress()+"-----");
-        		smessage = v.packData(p.getHead().getSourceID(),p.getAuth().getTimeStamp(),p.getTicket().getSessionKey());//打包并发送
+        		try {
+					smessage = v.packData(p.getHead().getSourceID(),p.getAuth().getTimeStamp(),p.getTicket().getSessionKey());
+				} catch (UnsupportedEncodingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}//打包并发送
         	 	ui.setText_send("socket："+s);
 	        	ui.setText_send("-------开始发送-------     -----"+s.getInetAddress()+"-----");
 	        	ui.setText_send("send："+smessage);

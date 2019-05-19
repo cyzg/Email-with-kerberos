@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -131,7 +132,7 @@ public class V {
 			return p ;
 		}
 		else {
-			System.err.println("TGS收到的包有误");
+			System.err.println("V收到的包有误");
 			return null;
 		}
 	}
@@ -248,12 +249,13 @@ public class V {
 	 * @param clientID
 	 * @param TS
 	 * @return
+	 * @throws SQLException 
+	 * @throws UnsupportedEncodingException 
 	 */
-	public String packData(String clientID,String TS,String k){
-		DataStruct.Package p = new DataStruct.Package();;
-		
+	public String packData(String clientID,String TS,String k) throws SQLException, UnsupportedEncodingException{
+		DataStruct.Package p = new DataStruct.Package();
+	
 		p.setTimeStamp(DataStruct.Package.Create_lifeTime(TS, 1));
-		
 		if(Number > 16)
 		{
 			Number = -1;
@@ -268,7 +270,7 @@ public class V {
 		p.setTimeStamp(StringToBinary(p.getTimeStamp()));
 		
 		//des加密
-		String send = DES.encrypt(p.getTimeStamp(), k);
+		String send = DES.encrypt(p.packageOutput(), k);
 		
 		//生成消息认证码
 		String sc = DataStruct.Head.MD5(send);
@@ -390,7 +392,6 @@ public class V {
 			p.setsendID(sendid); 
 			p.setreceiveID(message[0]);
 			p.setTimeStamp(StringToBinary(DataStruct.Package.Create_TS()));
-			System.out.println(DataStruct.Package.Create_TS());
 			p.getAuth().setsessionkey(message[2]);
 			if(Number > 16)
 			{
@@ -401,33 +402,41 @@ public class V {
 			String securityCode = DataStruct.Head.MD5(p.packageOutput());
 			DataStruct.Head h= new DataStruct.Head(sendid,message[0],"0","1","1","1","1","0","0","1",number,securityCode,message[1]);//count转为二进制
 			p.setHead(h);
-			System.out.println(p);
 			return p;
 		}
-	public void appsend(String id,String IP, int port) throws SQLException, UnknownHostException, IOException {
+	public void appsend(String id,String IP, int port,Socket ss) throws SQLException, UnknownHostException, IOException {
 		// TODO Auto-generated method stub
 		Socket socket=null;
 		DBconncet db = new DBconncet();
 		Statement stat = DBconncet.connect().createStatement();
 		int count = db.selectID(stat, id);
-		System.out.println(count);
 		String message[][] =db.getData(stat, id, count);//数据库中存的
-		//String send ="";
-		for(int i = 0;i < count;i++){//数据库里有该客户端历史邮件
-			DataStruct.APPPackage ap = connect(id,message[i]);//
-			//id 在数据库里根据id查发送id 查密文message
-			String send = ap.getHead().headOutput()+ap.packageOutput();
-			System.out.println("send:"+send);
-			socket=new Socket(IP,6666);
-			try {
-				send(socket,send);
-			} catch (IOException e) {
-				socket.isClosed();
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+		String num = StringToBinary(String.valueOf(count));
+		Socket s=ss;
+		if(send(s,num))
+		{
+			s.close();
+			//String send ="";
+			for(int i = 0;i < count;i++){//数据库里有该客户端历史邮件
+				DataStruct.APPPackage ap = connect(id,message[i]);//
+				//id 在数据库里根据id查发送id 查密文message
+				String send=ap.getHead().headOutput()+ap.packageOutput();
+				System.out.println(send);
+				socket=new Socket(IP,6666);
+				try {
+					send(socket,send);
+				} catch (IOException e) {
+					socket.isClosed();
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
-		
+		else {
+			System.err.println("发送失败！");
+			s.close();
+		}
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException{

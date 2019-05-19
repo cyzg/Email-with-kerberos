@@ -68,7 +68,7 @@ public class WELCOME extends JFrame {
 	public WELCOME() {
 		setTitle("   ");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(500, 300, 855, 475);
+		setBounds(400, 250, 855, 475);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -91,7 +91,7 @@ public class WELCOME extends JFrame {
 		textField_1.setColumns(10);
 		
 		JLabel lblAs = new JLabel("\u6D88\u606F\u65E5\u5FD7");
-		lblAs.setBounds(585, 17, 72, 18);
+		lblAs.setBounds(585, 17, 80, 18);
 		lblAs.setFont(new Font("仿宋", Font.PLAIN, 18));
 		contentPane.setLayout(null);
 		
@@ -223,10 +223,10 @@ public class WELCOME extends JFrame {
 				    	
 				    	if(Client.send(socket,message)) {
 				    		rmessage = Client.receive(socket);
-				    	socket.close();
+				    		socket.close();
 				    	}
 				    	DataStruct.Package p4= Client.packageAnalyse(rmessage, p3.getSessionKey());
-						message1.setText(message1.getText()+"\r\n收到V的包：\r\n"+p2.toString());
+				    	message1.setText(message1.getText()+"\r\n收到V的包：\r\n"+p4.toString());
 				    	if(Client.verifyPackage(p4, TSv)) {
 							message1.setText(message1.getText()+"\r\nkerberos认证成功，进入Email！");
 				    		System.out.println("kerberos认证成功，进入Email！");
@@ -238,16 +238,26 @@ public class WELCOME extends JFrame {
 				    		keb =  false;
 				    	}
 						if(keb)
-						{
-							//dispose();
-							Send_email frame3 = new Send_email();
-							frame3.setVisible(true);
+						{	
+							EventQueue.invokeLater(new Runnable() {
+							public void run() {
+								try {
+//									dispose();	
+									Send_email send_email = new Send_email();
+									send_email.setId(clientID);									
+									send_email.setVisible(true);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						});
 						}
 					} catch (UnknownHostException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
+						
 						e1.printStackTrace();
 					}
 				}
@@ -268,7 +278,7 @@ public class WELCOME extends JFrame {
 		
 		JLabel lblwelcome = new JLabel("*********  Welcome  *********");
 		lblwelcome.setFont(new Font("仿宋", Font.PLAIN, 18));
-		lblwelcome.setBounds(62, 17, 272, 40);
+		lblwelcome.setBounds(62, 17, 280, 40);
 		contentPane.add(lblwelcome);
 	}
 	

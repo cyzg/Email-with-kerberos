@@ -29,8 +29,8 @@ public class Send_email extends JFrame {
 	private JPanel contentPane;
 	private JTextField textField_sender;
 	private JTextField textField_time;
+	JTextArea textArea_message;
 	private String id;
-	
 
 	public Send_email(String id) throws HeadlessException {
 		this.id = id;
@@ -87,12 +87,33 @@ public class Send_email extends JFrame {
 		JButton history = new JButton("查看收件箱");
 		history.addActionListener(new ActionListener() {                                                       //发邮件按钮    
 			public void actionPerformed(ActionEvent e) {
-
-				receive_email email = new receive_email(id);
+				receive_email email = new receive_email();
 				email.setVisible(true);
-				Socket socket = null;
+				email.setId(id);
+				String message = Client.requestEmail(id);
+				Socket socket;
 				try {
-					socket = new Socket(Client.SERVERID,5555);
+					socket = new Socket(Client.SERVERIP,5555);
+				boolean send = Client.send(socket,message);
+					if(send) {//发送一条请求 请求接收历史邮件
+						try {
+							System.out.println(id);
+				        	String rmessage = Client.receive(socket);
+				        	int num = Integer.parseInt(Client.BinaryToString(rmessage));
+				        	if(num != 0)
+				        	{
+				        		new Thread(CReceiver.listener(6666,email,num)).start();
+							}
+				        	else System.out.println("没有收到邮件");
+						} catch (InterruptedException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}	//收历史邮件
+						socket.close();
+					}
+					else {
+						socket.close();
+					}
 				} catch (UnknownHostException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -100,19 +121,6 @@ public class Send_email extends JFrame {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-				String message = Client.requestEmail(id);	
-				
-				try {
-					if(Client.send(socket,message)) {//发送一条请求 请求接收历史邮件
-						new Thread(CReceiver.listener(6666)).start();	//收历史邮件
-					}
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} 
 			}
 		});
 		history.setBounds(37, 271, 130, 27);
@@ -129,7 +137,7 @@ public class Send_email extends JFrame {
 		scrollPane.setBounds(434, 33, 221, 265);
 		contentPane.add(scrollPane);
 		
-		JTextArea textArea_message = new JTextArea();
+		textArea_message = new JTextArea();
 		textArea_message.setEditable(false);
 		textArea_message.setLineWrap(true);
 		scrollPane.setViewportView(textArea_message);
@@ -145,23 +153,23 @@ public class Send_email extends JFrame {
 		
 		JLabel label_sender = new JLabel("\u53D1\u4EF6\u4EBA\uFF1A");
 		label_sender.setFont(new Font("仿宋", Font.PLAIN, 18));
-		label_sender.setBounds(37, 47, 72, 18);
+		label_sender.setBounds(37, 47, 80, 18);
 		contentPane.add(label_sender);
 		
 		JLabel label_time = new JLabel("\u53D1\u4EF6\u65F6\u95F4\uFF1A");
 		label_time.setFont(new Font("仿宋", Font.PLAIN, 18));
-		label_time.setBounds(213, 47, 102, 18);
+		label_time.setBounds(177, 47, 102, 18);
 		contentPane.add(label_time);
 		
 		textField_sender = new JTextField();
-		textField_sender.setBounds(103, 46, 108, 24);
+		textField_sender.setBounds(103, 46, 50, 24);
 		contentPane.add(textField_sender);
 		textField_sender.setColumns(10);
 		
 		textField_time = new JTextField();
 		textField_time.setEditable(false);
 		textField_time.setColumns(10);
-		textField_time.setBounds(301, 46, 108, 24);
+		textField_time.setBounds(260, 46, 150, 24);
 		contentPane.add(textField_time);
 		
 
@@ -173,15 +181,22 @@ public class Send_email extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String receiveid = textField_sender.getText();
 				String content = textArea_write.getText();
-				DataStruct.APPPackage psend= Client.connect(id,receiveid,content);
+				String TS = DataStruct.Package.Create_TS();
+				char M[] = TS.toCharArray();
+				textField_time.setText(""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13]);
+				setmessage("-----发送邮件-----");
+				setmessage("Receive:"+receiveid);
+				setmessage("Time:"+textField_time.getText());
+				setmessage("Email:"+content);
+				DataStruct.APPPackage psend= Client.connect(id,receiveid,content,TS);
 				String message =Client.appackageToBinary(psend);
 				String rmessage = "";
-				Socket socket;
+				Socket ss;
 				try {
-					socket = new Socket(Client.SERVERIP,5555);
-		    	if(Client.send(socket,message)) {
-		    		rmessage = Client.receive(socket);
-		    		socket.close();
+					ss = new Socket(Client.SERVERIP,5555);
+		    	if(Client.send(ss,message)) {
+		    		rmessage = Client.receive(ss);
+		    		ss.close();
 				}
 				} catch (UnknownHostException e1) {
 					// TODO Auto-generated catch block
@@ -207,5 +222,9 @@ public class Send_email extends JFrame {
 		});
 		
 	}
-	
+	public void setmessage(String s) {
+		if(!textArea_message.getText().equals(""))
+		this.textArea_message.setText(textArea_message.getText()+"\r\n"+s); 
+		else this.textArea_message.setText(s);
+	}
 }

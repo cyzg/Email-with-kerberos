@@ -1,5 +1,6 @@
   package Client;
 
+import java.awt.EventQueue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,6 +12,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
+import Client.UI.Send_email;
 import Client.UI.WELCOME;
 import DataStruct.Authenticator;
 import DataStruct.Ticket;
@@ -432,7 +434,7 @@ public class Client {
 		String pack = message.replaceFirst(p.getHead().headOutput(), "");
 		//验证消息验证码
 		if(DataStruct.Head.MD5(pack).equals(p.getHead().getSecurityCode())) {	
-			 if(p.getHead().getExistLifeTime().equals("1")) {
+			 if(p.getHead().getExistLifeTime().equals("1")&&p.getHead().getExistTicket().equals("1")) {
 				//说明是AS发的
 				//package解密 用client私钥
 				String m = message.replaceFirst(p.getHead().headOutput(),"");
@@ -527,7 +529,7 @@ public class Client {
 				//package解密 用Kv，c 传参进来k
 				String m = message.replaceFirst(p.getHead().headOutput(),"");
 				message = DES.decrypt(m, k);
-				p.setTimeStamp(BinaryToString(message));
+				p.setTimeStamp(BinaryToString(message.substring(0, 56)));
 			}	
 			System.out.println("分析的包："+ p);
 			return p ;
@@ -735,12 +737,11 @@ public class Client {
 	/**
 	 * 与Server端连接后的通信
 	 */
-		public static DataStruct.APPPackage connect(String sendID,String receiveID,String content)
+		public static DataStruct.APPPackage connect(String sendID,String receiveID,String content,String TS)
 		{  		
 			DataStruct.APPPackage p= new DataStruct.APPPackage();
 			DataStruct.APPAuthenticator a=new DataStruct.APPAuthenticator();
 			DataStruct.Email e=new DataStruct.Email();
-			String TS=DataStruct.Package.Create_TS();
 			String sessionkey=generateKeyCC();
 	
 			System.out.println("test:"+content);
@@ -813,8 +814,16 @@ public class Client {
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 
-		WELCOME frame = new WELCOME();
-		frame.setVisible(true);
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					WELCOME frame = new WELCOME();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 }
 

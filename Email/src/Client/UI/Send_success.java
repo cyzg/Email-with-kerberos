@@ -36,7 +36,7 @@ public class Send_success extends JFrame{
 	public Send_success() {
 		setTitle("\u63D0\u793A");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 413, 282);
+		setBounds(650,400, 413, 282);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -50,9 +50,7 @@ public class Send_success extends JFrame{
 		JButton button = new JButton("\u8FD4\u56DE");
 		button.addActionListener(new ActionListener() {                                                 //按钮，返回send_email界面
 			public void actionPerformed(ActionEvent arg0) {
-				Send_email frame3 = new Send_email();
-				frame3.setVisible(true);
-				
+				dispose();
 			}
 		});
 		button.setFont(new Font("仿宋", Font.PLAIN, 18));

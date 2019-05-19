@@ -34,23 +34,29 @@ public class CReceiver extends Thread{
         	
         	//拆包调用
         	DataStruct.APPPackage p = Client.apppackageAnalyse(message);
-        	ui.getEmail("sender："+p.getAuth().getsendID());
-        	ui.getEmail("Email："+p.getEmail().getcontent());
+        	ui.getEmail("Sender："+p.getAuth().getsendID());
+        	ui.getEmail("Time："+p.getAuth().getTimeStamp());
+        	String TS = p.getEmail().getcontent();		
+			char M[] = TS.toCharArray();
+        	TS = ""+M[0]+M[1]+M[2]+M[3]+"-"+M[4]+M[5]+"-"+M[6]+M[7]+" "+M[8]+M[9]+":"+M[10]+M[11]+":"+M[12]+M[13];
+
+        	ui.getEmail("Email："+TS);
         	System.out.println("邮件发信人："+p.getAuth().getsendID());	
         	System.out.println("邮件内容："+p.getEmail().getcontent());	
         }
 		
-			public static  Runnable listener(int port)throws IOException, InterruptedException{
+			public static  Runnable listener(int port,receive_email ui,int num)throws IOException, InterruptedException{
  				 System.out.println("-------开始接收邮件----------");
  				 ServerSocket server = null;
 				 Socket sclast = null;
 				 Socket sc =null;
 				 try {	
 					 server= new ServerSocket(port);
-					 while(true) {
+					 for(int i= 0;i<num;i++) {
+						 
 						sc= server.accept();
 						if(sclast!=sc) {	
-							Thread thread =new CReceiver(sc);
+							Thread thread =new CReceiver(sc,ui);
 							thread.start();
 				        	try {
 								Thread.sleep(100);
